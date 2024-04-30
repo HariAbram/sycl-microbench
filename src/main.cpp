@@ -130,8 +130,7 @@ int main(int argc, char* argv[]) {
                                         "       1 - range with USM\n"
                                         "       2 - range with Buffer and Accessors\n"
                                         "       3 - nd_range with USM\n"
-                                        "       4 - nd_range with Buffer and Accessor\n"
-                                        " --omp : to activate OMP simd pragams in vectorzation benchmarks "<< std::endl;
+                                        "       4 - nd_range with Buffer and Accessor\n" << std::endl;
       
       exit(EXIT_FAILURE);
     }

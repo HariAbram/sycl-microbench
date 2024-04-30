@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
 
-set(SYCL_RUNTIME "DPCPP")
-#set(SYCL_RUNTIME "HIPSYCL")
 
 if(${SYCL_RUNTIME} STREQUAL "DPCPP")
    if (NOT DPCPP_BIN)
@@ -124,8 +122,6 @@ else()
   message(FATAL_ERROR "SYCL_RUNTIME not specified.")
 
 endif(SYCL_RUNTIME)
-
-set(OMP_LIBRARY "/usr/lib/llvm-14/lib/libomp.so")
 
 set(OMP_COMPILE TRUE)
 

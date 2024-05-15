@@ -28,7 +28,7 @@ bool verification (TYPE *m1, TYPE *m2 , TYPE *m3, int size)
         for (size_t j = 0; j < size; j++)
         {
             TYPE temp = 0.0;
-            for (size_t k = 0; k < size; i++)
+            for (size_t k = 0; k < size; k++)
             {
                 temp += m2[i*size+k]*m1[k*size+j];
             }

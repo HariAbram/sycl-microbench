@@ -48,7 +48,7 @@ double delay_time()
 
 // memory allocations
 
-void host_memory_alloc(sycl::queue &Q, int size)
+void host_memory_alloc(sycl::queue &Q, int size, bool print)
 {
 
     timer time;
@@ -98,12 +98,18 @@ void host_memory_alloc(sycl::queue &Q, int size)
         free(a_host,Q);
     }
 
-    std::cout << "Total time taken for the host memory allocation with sycl "<< host_alloc_time/10 << " nanoseconds\n" 
-                 "fill time is "<< time_fill/(10*1E3)<< " microseconds"<<std::endl;
+    if (print)
+    {
+       std::cout << "Total time taken for the host memory allocation with sycl "<< host_alloc_time/10 << " nanoseconds\n" 
+                 "fill time is "<< time_fill/(10*1E3)<< " microseconds"<<std::endl; 
+    }
+    
+
+    
 
 }
 
-void shared_memory_alloc(sycl::queue &Q, int size)
+void shared_memory_alloc(sycl::queue &Q, int size, bool print)
 {
 
     timer time;
@@ -154,12 +160,17 @@ void shared_memory_alloc(sycl::queue &Q, int size)
         free(a_shared,Q);
     }
 
-    std::cout << "Total time taken for the shared memory allocation with sycl "<< shared_alloc_time/10 << " nanoseconds\n" 
+    if (print)
+    {
+        std::cout << "Total time taken for the shared memory allocation with sycl "<< shared_alloc_time/10 << " nanoseconds\n" 
                 "fill time is "<< time_fill/(10*1E3)<< " microseconds"<<std::endl;
+    }
+    
+    
 
 }
 
-void device_memory_alloc(sycl::queue &Q, int size)
+void device_memory_alloc(sycl::queue &Q, int size, bool print)
 {
 
     timer time;
@@ -207,8 +218,13 @@ void device_memory_alloc(sycl::queue &Q, int size)
         free(a_device,Q);
     }
 
-    std::cout << "Total time taken for the device memory allocation with sycl "<< device_alloc_time/10 << " nanoseconds\n" 
+    if (print)
+    {
+        std::cout << "Total time taken for the device memory allocation with sycl "<< device_alloc_time/10 << " nanoseconds\n" 
                  "fill time is "<< time_fill/(10*1E3)<< " microseconds"<<std::endl;
+    }
+    
+    
 
 }
 
@@ -216,7 +232,7 @@ void device_memory_alloc(sycl::queue &Q, int size)
 // sycl::range constuct
 
 
-void range_with_usm(sycl::queue &Q, int size, int dim)
+void range_with_usm(sycl::queue &Q, int size, int dim, bool print)
 {
 
     /*
@@ -232,7 +248,7 @@ void range_with_usm(sycl::queue &Q, int size, int dim)
 
     timer time;
 
-    volatile TYPE * sum = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
+    TYPE * sum = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
 
     std::fill(sum,sum+(size*size),0);
 
@@ -276,7 +292,13 @@ void range_with_usm(sycl::queue &Q, int size, int dim)
         {
             std::cout << "Verification failed"<< std::endl;
         }
-        std::cout << "Total time taken for the execution of range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+        if (print)
+        {
+            std::cout << "Total time taken for the execution of range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        }
+        
+        
 
 
     }
@@ -316,7 +338,13 @@ void range_with_usm(sycl::queue &Q, int size, int dim)
         }
 
         auto kernel_offload_time = time.duration();
-        std::cout << "Total time taken for the execution of range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+        if (print)
+        {
+            std::cout << "Total time taken for the execution of range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        }
+        
+        
     
 
     }
@@ -329,7 +357,7 @@ void range_with_usm(sycl::queue &Q, int size, int dim)
     
 }
 
-void range_with_buff_acc(sycl::queue &Q, int size, int dim)
+void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print)
 {
 
     /*
@@ -345,7 +373,7 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim)
 
     timer time;
 
-    volatile TYPE * sum = (TYPE *)malloc(size*size*sizeof(TYPE)); 
+    TYPE * sum = (TYPE *)malloc(size*size*sizeof(TYPE)); 
 
     std::fill(sum,sum+(size*size),0);
 
@@ -400,7 +428,13 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim)
         }
 
         auto kernel_offload_time = time.duration();
-        std::cout << "Total time taken for the execution of range parallel construct with " << dim << " dim \n and buff and acc is " << kernel_offload_time / (10 * 1E9) << " seconds\n"<< std::endl;
+
+        if (print)
+        {
+            std::cout << "Total time taken for the execution of range parallel construct with " << dim << " dim \n and buff and acc is " << kernel_offload_time / (10 * 1E9) << " seconds\n"<< std::endl;
+        }
+        
+        
     }
     else if (dim == 2)
     {
@@ -448,7 +482,13 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim)
         }
 
         auto kernel_offload_time = time.duration();
-        std::cout << "Total time taken for the execution of range parallel construct with "<< dim <<" dim \n and buff and acc is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+        if (print)
+        {
+            std::cout << "Total time taken for the execution of range parallel construct with "<< dim <<" dim \n and buff and acc is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        }
+        
+        
     
     } 
     else
@@ -464,7 +504,7 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim)
 // sycl::nd_range constuct
 
 
-void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim)
+void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool print)
 {
 
     /*
@@ -531,7 +571,13 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim)
         }
 
         auto kernel_offload_time = time.duration();
-        std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+        if (print)
+        {
+            std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        }
+        
+        
 
 
     }
@@ -579,7 +625,13 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim)
         }
 
         auto kernel_offload_time = time.duration();
-        std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+        if (print)
+        {
+            std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        }
+        
+        
     
 
     }
@@ -592,7 +644,7 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim)
     
 } 
 
-void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim)
+void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, bool print)
 {
 
     /*
@@ -673,7 +725,13 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim)
         }
 
         auto kernel_offload_time = time.duration();
-        std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and buff and acc is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+        if (print)
+        {
+            std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and buff and acc is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        }
+        
+        
     
     }
     else if (dim == 2)
@@ -730,7 +788,13 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim)
         }
 
         auto kernel_offload_time = time.duration();
-        std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and buff and acc is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+        if (print)
+        {
+            std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and buff and acc is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        }
+        
+        
     
     }
     else
@@ -745,7 +809,7 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim)
 
 // reduction 
 
-void reduction_with_atomics_buf_acc(sycl::queue &Q, int size)
+void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print)
 {
     timer time;
 
@@ -803,14 +867,18 @@ void reduction_with_atomics_buf_acc(sycl::queue &Q, int size)
     }
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Total time taken for reduction using atomics and buffer and accessor memory management  "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+    if (print)
+    {
+        std::cout << "Total time taken for reduction using atomics and buffer and accessor memory management  "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+    }
     
     
     free(m);
     free(sum);
 }
 
-void reduction_with_atomics_usm(sycl::queue &Q, int size)
+void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print)
 {
     timer time;
 
@@ -857,7 +925,13 @@ void reduction_with_atomics_usm(sycl::queue &Q, int size)
     }
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Total time taken for reduction using atomics and USM memory management  "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+    if (print)
+    {
+        std::cout << "Total time taken for reduction using atomics and USM memory management  "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+    }
+    
+    
     
     
     free(m_shared,Q);
@@ -865,7 +939,7 @@ void reduction_with_atomics_usm(sycl::queue &Q, int size)
 
 #if defined(REDUCTION_IN_SYCL) 
 
-void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size)
+void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print)
 {
     timer time;
 
@@ -916,7 +990,13 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size)
     time.end_timer();
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Total time taken for reduction using atomics and USM memory management  "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+    if (print)
+    {
+        std::cout << "Total time taken for reduction using SYCL reduction contruct  "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+    }
+    
+    
     
     
     free(m_shared);
@@ -925,7 +1005,7 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size)
 #endif
 
 
-void global_barrier_test_usm(sycl::queue &Q, int size, int block_size)
+void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print)
 {
 
     std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
@@ -980,7 +1060,13 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size)
 
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Total time taken for the global barrier scope with 1 dim \n while using USM "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+    if (print)
+    {
+        std::cout << "Total time taken for the global barrier scope with 1 dim \n while using USM "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+    }
+    
+    
 
     free(sum,Q);
     
@@ -988,7 +1074,7 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size)
 }
 
 
-void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size)
+void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print)
 {
 
     std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
@@ -1054,7 +1140,12 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size)
     }
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Total time taken for the global barrier scope with 1 dim \n while using buffer and accessors "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+    if (print)
+    {
+        std::cout << "Total time taken for the global barrier scope with 1 dim \n while using buffer and accessors "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+    }
+    
 
     free(sum);
     
@@ -1062,7 +1153,7 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size)
 }
 
 
-void local_barrier_test_usm(sycl::queue &Q, int size, int block_size)
+void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print)
 {
 
     std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
@@ -1116,14 +1207,18 @@ void local_barrier_test_usm(sycl::queue &Q, int size, int block_size)
     }
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Total time taken for the local barrier scope with 1 dim \n while using USM "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+    if (print)
+    {
+        std::cout << "Total time taken for the local barrier scope with 1 dim \n while using USM "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+    }
     
 
     free(sum,Q);
 
 }
 
-void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size)
+void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print)
 {
 
     std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
@@ -1187,7 +1282,11 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size)
     }
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Total time taken for the local barrier scope with 1 dim \n while using buffer and accessors "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+
+    if (print)
+    {
+        std::cout << "Total time taken for the local barrier scope with 1 dim \n while using buffer and accessors "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+    }
     
     free(sum);
 

@@ -17,11 +17,11 @@ void vec_add_ndrange_usm(sycl::queue &Q, int size, int block_size);
 
 void vec_add_ndrange_buff_acc(sycl::queue &Q, int size, int block_size);
 
-void mat_mul_range_usm(sycl::queue &Q, int size, bool OMP);
+void mat_mul_range_usm(sycl::queue &Q, int size);
 
-void mat_mul_range_buff_acc(sycl::queue &Q, int size, bool OMP);
+void mat_mul_range_buff_acc(sycl::queue &Q, int size);
 
-void mat_mul_ndrange_usm(sycl::queue &Q, int size, int block_size, bool OMP);
+void mat_mul_ndrange_usm(sycl::queue &Q, int size, int block_size);
 
-void mat_mul_ndrange_buff_acc(sycl::queue &Q, int size, int block_size, bool OMP);
+void mat_mul_ndrange_buff_acc(sycl::queue &Q, int size, int block_size);
 

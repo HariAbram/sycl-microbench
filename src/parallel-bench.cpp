@@ -971,9 +971,9 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
 
             auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
 
-            auto sum_red = sycl::reduction(sum_buff, cgh,sycl::plus<TYPE>());
+            //auto sum_red = sycl::reduction(sum_buff, cgh,sycl::plus<TYPE>());
 
-            //auto sum_red = sycl::reduction(sum_acc, sycl::plus<TYPE>());
+            auto sum_red = sycl::reduction(sum_acc, sycl::plus<TYPE>());
 
             cgh.parallel_for<>(sycl::nd_range<1>(global,local), sum_red ,[=](sycl::nd_item<1>it, auto &sum){
 
@@ -1008,7 +1008,12 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
 void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print)
 {
 
-    std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    if (print)
+    {
+        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    }
+    
+    
 
     timer time;
 
@@ -1077,7 +1082,10 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool prin
 void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print)
 {
 
-    std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    if (print)
+    {
+        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    }
 
     timer time;
 
@@ -1156,7 +1164,10 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
 void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print)
 {
 
-    std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    if (print)
+    {
+        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    }
 
     timer time;
 
@@ -1221,7 +1232,10 @@ void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print
 void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print)
 {
 
-    std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    if (print)
+    {
+        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    }
 
     timer time;
 

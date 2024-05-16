@@ -665,9 +665,7 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
     TYPE * sum = (TYPE *)malloc(size*size*sizeof(TYPE)); 
 
     std::fill(sum,sum+(size*size),0);
-
-    const int DIM = dim;
-    
+   
     auto N = static_cast<size_t>(size);
 
     sycl::range<1> global{N};    
@@ -971,9 +969,11 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
 
             auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
 
-            //auto sum_red = sycl::reduction(sum_buff, cgh,sycl::plus<TYPE>());
-
+#if defined(DPCPP) 
+            auto sum_red = sycl::reduction(sum_buff, cgh,sycl::plus<TYPE>());
+#else
             auto sum_red = sycl::reduction(sum_acc, sycl::plus<TYPE>());
+#endif
 
             cgh.parallel_for<>(sycl::nd_range<1>(global,local), sum_red ,[=](sycl::nd_item<1>it, auto &sum){
 

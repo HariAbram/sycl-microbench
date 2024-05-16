@@ -53,9 +53,7 @@ int main(int argc, char* argv[]) {
     bool nd_range=false;
     bool barrier=false;
 
-    char * vec = NULL;
     int vec_no = 1;
-    char *OMP_pragmas = NULL;
 
     bool help = false;
 
@@ -201,7 +199,6 @@ int main(int argc, char* argv[]) {
 
       float time_fill = 0;
 
-      struct timeval tv;
 
       time.start_timer();
       for (size_t i = 0; i < 10; i++)

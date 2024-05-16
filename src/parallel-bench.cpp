@@ -518,7 +518,10 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
     * 
     */
 
-    std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    if (print)
+    {
+        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    }
 
     timer time;
 
@@ -658,7 +661,10 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
     * 
     */
 
-    std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    if (print)
+    {
+        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+    }
 
     timer time;
 

@@ -22,7 +22,7 @@ For optimal performance `OMP_PROC_BIND` environment variable is set to true.
 ### Example
 
 ```
-./binary " [-s size |-b blocksize <optional>|\n
+./binary " [-s size |-b blocksize <optional>| -t No. iterations\n
    	 --mat-mul : to run matrix multiplication \n
 	 --vec-add : to run vector addition \n
 	   can run only mat-mul or vec-add at a time, can't run both simultaneously \n

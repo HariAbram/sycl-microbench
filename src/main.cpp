@@ -8,6 +8,7 @@
 #include <chrono>
 #include <sys/time.h>
 #include <omp.h>
+#include <algorithm>
 
 #ifndef TYPE
 #define TYPE double
@@ -33,6 +34,7 @@ static struct option long_options[] = {
   {"ndrange", 0, NULL, 'n'},
   {"barrier", 0, NULL, 'w'},
   {"index_m", 1, NULL, 'i'},
+  {"iterations", 1, NULL, 't'},
   {"help", 0, NULL, 'h'},
   {0,0,0,0}
 };
@@ -57,8 +59,10 @@ int main(int argc, char* argv[]) {
 
     bool help = false;
 
+    int iter = 10;
 
-    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:", 
+
+    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:t:", 
           long_options, &option_index)) != -1 ) {
     switch(opt){
       case 's':
@@ -90,6 +94,9 @@ int main(int argc, char* argv[]) {
         break;
       case 'i':
         vec_no = atoi(optarg);
+        break;
+      case 't':
+        iter = atoi(optarg);
         break;
       case 'h':
         help = true;
@@ -181,24 +188,29 @@ int main(int argc, char* argv[]) {
     }
     else if (mem_alloc)
     {
+      std::cout
+          << std::left << std::setw(24) << "Function"
+          << std::left << std::setw(24) << "MBytes/sec"
+          << std::left << std::setw(24) << "Min (sec)"
+          << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Average"
+          << std::endl
+          << std::fixed;
 
-      host_memory_alloc(Q, n_row, false);
+      host_memory_alloc(Q, n_row, false, 3);
 
-      host_memory_alloc(Q, n_row, true);
+      host_memory_alloc(Q, n_row, true, iter);
 
-      shared_memory_alloc(Q, n_row,false);
+      shared_memory_alloc(Q, n_row,false, 3);
 
-      shared_memory_alloc(Q, n_row,true);
+      shared_memory_alloc(Q, n_row,true, iter);
 
-      device_memory_alloc(Q, n_row,false);
+      device_memory_alloc(Q, n_row,false, 3);
 
-      device_memory_alloc(Q, n_row,true);
+      device_memory_alloc(Q, n_row,true, iter);
 
       timer time;
       timer time1;
-
-      float time_fill = 0;
-
 
       time.start_timer();
       for (size_t i = 0; i < 10; i++)
@@ -210,8 +222,7 @@ int main(int argc, char* argv[]) {
       }
       time.end_timer();
  
-
-      auto kernel_offload_time = time.duration();
+      auto timings = (double*)malloc(sizeof(double)*iter);
 
       for (size_t i = 0; i < 10; i++)
       {
@@ -228,12 +239,23 @@ int main(int argc, char* argv[]) {
           }
           
           time1.end_timer();
-          time_fill += time1.duration();
+          timings[i] = time1.duration();
           free(m);
       }
 
-      std::cout << "Total time taken for the memory allocation with malloc "<< kernel_offload_time/10 << " nanoseconds\n" 
-                   "fill time is "<< time_fill/(10*1E3)<< " microseconds"<<std::endl;
+      auto minmax = std::minmax_element(timings, timings+iter);
+
+      double bandwidth = 1.0E-6 * n_row*n_row*sizeof(TYPE) / (*minmax.first*1E-9);
+
+      double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter - 1);
+
+      std::cout
+          << std::left << std::setw(24) << "std memory"
+          << std::left << std::setw(24) << bandwidth
+          << std::left << std::setw(24) << *minmax.first*1E-9
+          << std::left << std::setw(24) << *minmax.second*1E-9
+          << std::left << std::setw(24) << average*1E-9
+          << std::endl;
 
 
 
@@ -241,75 +263,114 @@ int main(int argc, char* argv[]) {
 
     else if (reduction)
     {
-      reduction_with_atomics_buf_acc(Q, n_row, false);
+      std::cout
+          << std::left << std::setw(24) << "Function"
+          << std::left << std::setw(24) << "Min (sec)"
+          << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Average"
+          << std::endl
+          << std::fixed;
 
-      reduction_with_atomics_buf_acc(Q, n_row, true);
+      reduction_with_atomics_usm(Q, n_row, false, 3);
 
-      reduction_with_atomics_usm(Q, n_row, false);
+      reduction_with_atomics_usm(Q, n_row, true, iter);
 
-      reduction_with_atomics_usm(Q, n_row, true);
-      
-      reduction_with_buf_acc(Q, n_row,  block_size, false);
+      reduction_with_atomics_buf_acc(Q, n_row, false, 3);
 
-      reduction_with_buf_acc(Q, n_row,  block_size, true);
+      reduction_with_atomics_buf_acc(Q, n_row, true, iter);
+
+      reduction_with_buf_acc(Q, n_row,  block_size, false, 3);
+
+      reduction_with_buf_acc(Q, n_row,  block_size, true, iter);
     }
     else if (range)
     {
-      range_with_usm(Q, n_row, 1,false);
+      std::cout
+          << std::left << std::setw(24) << "Function"
+          << std::left << std::setw(24) << "Dimension"
+          << std::left << std::setw(24) << "Min (sec)"
+          << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Average"
+          << std::endl
+          << std::fixed;
 
-      range_with_usm(Q, n_row, 1,true);
+      range_with_usm(Q, n_row, 1,false, 3);
 
-      range_with_usm(Q, n_row, 2,false);
+      range_with_usm(Q, n_row, 1,true, iter);
 
-      range_with_usm(Q, n_row, 2,true);
+      range_with_usm(Q, n_row, 2,false, 3);
 
-      range_with_buff_acc(Q, n_row ,1,false);
+      range_with_usm(Q, n_row, 2,true, iter);
 
-      range_with_buff_acc(Q, n_row ,1,true);
+      range_with_buff_acc(Q, n_row ,1,false, 3);
+
+      range_with_buff_acc(Q, n_row ,1,true, iter);
       
-      range_with_buff_acc(Q, n_row ,2,false);
+      range_with_buff_acc(Q, n_row ,2,false, 3);
 
-      range_with_buff_acc(Q, n_row ,2,true);
+      range_with_buff_acc(Q, n_row ,2,true, iter);
 
       
     }
     else if (nd_range)
     {
-      nd_range_with_usm(Q, n_row, block_size ,1, false);
 
-      nd_range_with_usm(Q, n_row, block_size ,1, true);
+      std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
 
-      nd_range_with_usm(Q, n_row, block_size ,2, false);
+      std::cout
+          << std::left << std::setw(24) << "Function"
+          << std::left << std::setw(24) << "Dimension"
+          << std::left << std::setw(24) << "Min (sec)"
+          << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Average"
+          << std::endl
+          << std::fixed;
 
-      nd_range_with_usm(Q, n_row, block_size ,2, true);
+      nd_range_with_usm(Q, n_row, block_size ,1, false, 3);
 
-      nd_range_with_buff_acc(Q, n_row, block_size ,1, false);
+      nd_range_with_usm(Q, n_row, block_size ,1, true, iter);
+
+      nd_range_with_usm(Q, n_row, block_size ,2, false, 3);
+
+      nd_range_with_usm(Q, n_row, block_size ,2, true, iter);
+
+      nd_range_with_buff_acc(Q, n_row, block_size ,1, false, 3);
       
-      nd_range_with_buff_acc(Q, n_row, block_size ,1, true);
+      nd_range_with_buff_acc(Q, n_row, block_size ,1, true, iter);
 
-      nd_range_with_buff_acc(Q, n_row, block_size ,2, false);
+      nd_range_with_buff_acc(Q, n_row, block_size ,2, false, 3);
 
-      nd_range_with_buff_acc(Q, n_row, block_size ,2, true);
+      nd_range_with_buff_acc(Q, n_row, block_size ,2, true, iter);
     }
     
     else if (barrier)
     {
 
-      global_barrier_test_usm(Q, n_row, block_size, false);
+      std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
+      
+      std::cout
+          << std::left << std::setw(24) << "Function"
+          << std::left << std::setw(24) << "Min (sec)"
+          << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Average"
+          << std::endl
+          << std::fixed;
 
-      global_barrier_test_usm(Q, n_row, block_size, true);
+      global_barrier_test_usm(Q, n_row, block_size, false, 3);
 
-      global_barrier_test_buff_acc(Q, n_row,  block_size, false);
+      global_barrier_test_usm(Q, n_row, block_size, true, iter);
 
-      global_barrier_test_buff_acc(Q, n_row,  block_size, true);
+      global_barrier_test_buff_acc(Q, n_row,  block_size, false, 3);
 
-      local_barrier_test_usm(Q, n_row, block_size, false);
+      global_barrier_test_buff_acc(Q, n_row,  block_size, true, iter);
 
-      local_barrier_test_usm(Q, n_row, block_size, true);
+      local_barrier_test_usm(Q, n_row, block_size, false, 3);
 
-      local_barrier_test_buff_acc(Q, n_row, block_size, false);
+      local_barrier_test_usm(Q, n_row, block_size, true, iter);
 
-      local_barrier_test_buff_acc(Q, n_row, block_size, true);
+      local_barrier_test_buff_acc(Q, n_row, block_size, false, 3);
+
+      local_barrier_test_buff_acc(Q, n_row, block_size, true, iter);
 
     }
 

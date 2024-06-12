@@ -13,39 +13,39 @@ double delay_time();
 
 // memory allocation 
 
-void host_memory_alloc(sycl::queue &Q, int size, bool print);
+void host_memory_alloc(sycl::queue &Q, int size, bool print, int iter);
 
-void shared_memory_alloc(sycl::queue &Q, int size, bool print);
+void shared_memory_alloc(sycl::queue &Q, int size, bool print, int iter);
 
-void device_memory_alloc(sycl::queue &Q, int size, bool print);
+void device_memory_alloc(sycl::queue &Q, int size, bool print, int iter);
 
 //parallelization
 
-void range_with_usm(sycl::queue &Q, int size, int dim, bool print);
+void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter);
 
-void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print);
+void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter);
 
-void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool print);
+void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool print, int iter);
 
-void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, bool print);
+void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, bool print, int iter);
 
 //reduction
 
-void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print);
+void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter);
 
-void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print);
+void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print, int iter);
 
-void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print);
+void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print, int iter);
 
 // barriers
 
-void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print);
+void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter);
 
-void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print);
+void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter);
 
-void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print);
+void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter);
 
-void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print);
+void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter);
 
 
 

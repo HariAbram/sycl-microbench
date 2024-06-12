@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <sys/time.h>
 #include <chrono>
+#include <algorithm>
 
 
 #ifndef TYPE
@@ -48,14 +49,13 @@ double delay_time()
 
 // memory allocations
 
-void host_memory_alloc(sycl::queue &Q, int size, bool print)
+void host_memory_alloc(sycl::queue &Q, int size, bool print, int iter)
 {
 
     timer time;
 
     timer time1;
     
-    float time_fill = 0;
     int i;
 
     auto N = static_cast<size_t>(size);
@@ -70,9 +70,9 @@ void host_memory_alloc(sycl::queue &Q, int size, bool print)
     
     time.end_timer();
 
-    auto host_alloc_time = time.duration();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < iter; i++)
     {
         auto m_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
 
@@ -93,15 +93,26 @@ void host_memory_alloc(sycl::queue &Q, int size, bool print)
         Q.wait();
 
         time1.end_timer();
-        time_fill += time1.duration();
+        timings[i] = time1.duration();
         free(m_host,Q);
         free(a_host,Q);
     }
 
+    auto minmax = std::minmax_element(timings, timings+iter);
+
+    double bandwidth = 1.0E-6 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
+
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
+
     if (print)
     {
-       std::cout << "Total time taken for the host memory allocation with sycl "<< host_alloc_time/10 << " nanoseconds\n" 
-                 "fill time is "<< time_fill/(10*1E3)<< " microseconds"<<std::endl; 
+        std::cout
+          << std::left << std::setw(24) << "Host memory"
+          << std::left << std::setw(24) << bandwidth
+          << std::left << std::setw(24) << *minmax.first*1E-9
+          << std::left << std::setw(24) << *minmax.second*1E-9
+          << std::left << std::setw(24) << average*1E-9
+          << std::endl;
     }
     
 
@@ -109,14 +120,12 @@ void host_memory_alloc(sycl::queue &Q, int size, bool print)
 
 }
 
-void shared_memory_alloc(sycl::queue &Q, int size, bool print)
+void shared_memory_alloc(sycl::queue &Q, int size, bool print, int iter)
 {
 
     timer time;
 
     timer time1;
-    
-    float time_fill = 0;
 
     int i;
 
@@ -132,14 +141,14 @@ void shared_memory_alloc(sycl::queue &Q, int size, bool print)
     
     time.end_timer();
 
-    auto shared_alloc_time = time.duration();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < iter; i++)
     {
         sycl::range<1> global{N*N};
         auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
 
-        auto a_shared = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
+        auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
         std::fill(a_shared,a_shared+(size*size),1);
 
         time1.start_timer();
@@ -155,22 +164,33 @@ void shared_memory_alloc(sycl::queue &Q, int size, bool print)
         Q.wait();
 
         time1.end_timer();
-        time_fill += time1.duration();
+        timings[i] = time1.duration();
         free(m_shared,Q);
         free(a_shared,Q);
     }
 
+    auto minmax = std::minmax_element(timings, timings+iter);
+
+    double bandwidth = 1.0E-6 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
+
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
+
     if (print)
     {
-        std::cout << "Total time taken for the shared memory allocation with sycl "<< shared_alloc_time/10 << " nanoseconds\n" 
-                "fill time is "<< time_fill/(10*1E3)<< " microseconds"<<std::endl;
+        std::cout
+          << std::left << std::setw(24) << "shared memory"
+          << std::left << std::setw(24) << bandwidth
+          << std::left << std::setw(24) << *minmax.first*1E-9
+          << std::left << std::setw(24) << *minmax.second*1E-9
+          << std::left << std::setw(24) << average*1E-9
+          << std::endl;
     }
     
     
 
 }
 
-void device_memory_alloc(sycl::queue &Q, int size, bool print)
+void device_memory_alloc(sycl::queue &Q, int size, bool print, int iter)
 {
 
     timer time;
@@ -178,7 +198,6 @@ void device_memory_alloc(sycl::queue &Q, int size, bool print)
 
     int i;
     
-    float time_fill = 0;
     auto N = static_cast<size_t>(size);
 
     time.start_timer();
@@ -191,13 +210,14 @@ void device_memory_alloc(sycl::queue &Q, int size, bool print)
     
     time.end_timer();
 
-    auto device_alloc_time = time.duration();
-    for (size_t i = 0; i < 10; i++)
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
+
+    for (size_t i = 0; i < iter; i++)
     {
         sycl::range<1> global{N*N};
         auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
 
-        auto a_device = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
+        auto a_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
         std::fill(a_device,a_device+(size*size),1);
 
         time1.start_timer();
@@ -213,26 +233,34 @@ void device_memory_alloc(sycl::queue &Q, int size, bool print)
         Q.wait();
 
         time1.end_timer();
-        time_fill += time1.duration();
+        timings[i] = time1.duration();
         free(m_device,Q);
         free(a_device,Q);
     }
 
+    auto minmax = std::minmax_element(timings, timings+iter);
+
+    double bandwidth = 1.0E-6 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
+
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
+
     if (print)
     {
-        std::cout << "Total time taken for the device memory allocation with sycl "<< device_alloc_time/10 << " nanoseconds\n" 
-                 "fill time is "<< time_fill/(10*1E3)<< " microseconds"<<std::endl;
+        std::cout
+          << std::left << std::setw(24) << "Device memory"
+          << std::left << std::setw(24) << bandwidth
+          << std::left << std::setw(24) << *minmax.first*1E-9
+          << std::left << std::setw(24) << *minmax.second*1E-9
+          << std::left << std::setw(24) << average*1E-9
+          << std::endl;
     }
-    
-    
-
 }
 
 
 // sycl::range constuct
 
 
-void range_with_usm(sycl::queue &Q, int size, int dim, bool print)
+void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter)
 {
 
     /*
@@ -254,6 +282,8 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print)
 
     auto N = static_cast<size_t>(size);
 
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
+
     if (dim == 1)
     {
         sycl::range<1> global{N*N};
@@ -261,10 +291,12 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print)
 
         int i;
 
-        time.start_timer();
+        
 
-        for ( i = 0; i < 10; i++)
+        for ( i = 0; i < iter; i++)
         {
+            time.start_timer();
+
             Q.parallel_for<>(sycl::range<DIM>(global), [=](sycl::item<DIM>it){
 
                 auto k = it.get_id(0);
@@ -279,23 +311,35 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print)
             });
             Q.wait();
 
+            time.end_timer();
+
+            timings[i] = time.duration();
             
         }
         
 
-        time.end_timer();
+        auto minmax = std::minmax_element(timings, timings+iter);
 
-       
-        auto kernel_offload_time = time.duration();
+        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
         
-        if (sum[1] != 1024*10)
+        if (sum[1] != 1024*iter)
         {
-            std::cout << "Verification failed"<< std::endl;
+            std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value"<< sum[1]
+                      <<std::endl;
         }
 
         if (print)
         {
-            std::cout << "Total time taken for the execution of range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+            std::cout
+                << std::left << std::setw(24) << "range_USM"
+                << std::left << std::setw(24) << 1
+                << std::left << std::setw(24) << *minmax.first*1E-9
+                << std::left << std::setw(24) << *minmax.second*1E-9
+                << std::left << std::setw(24) << average*1E-9
+                << std::endl
+                << std::fixed;
         }
         
         
@@ -308,10 +352,12 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print)
         const int DIM = 2;
         int i;
 
-        time.start_timer();
+        
 
-        for ( i = 0; i < 10; i++)
+        for ( i = 0; i < iter; i++)
         {
+            time.start_timer();
+
             Q.parallel_for<>(sycl::range<DIM>(global), [=](sycl::item<DIM>it){
                 
                 auto k = it.get_id(0);
@@ -326,22 +372,36 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print)
             
             });
             Q.wait();
+
+            time.end_timer();
+
+            timings[i] = time.duration();
         }
+
         
+        auto minmax = std::minmax_element(timings, timings+iter);
 
-        time.end_timer();
+        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
 
-        if (sum[1] != 1024*10)
+        if (sum[1] != 1024*iter)
         {
-            std::cout << "Verification failed"<< std::endl;
+            std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value"<< sum[1]
+                      <<std::endl;
         }
-
-        auto kernel_offload_time = time.duration();
 
         if (print)
         {
-            std::cout << "Total time taken for the execution of range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+            std::cout
+                << std::left << std::setw(24) << "range_USM"
+                << std::left << std::setw(24) << 2
+                << std::left << std::setw(24) << *minmax.first*1E-9
+                << std::left << std::setw(24) << *minmax.second*1E-9
+                << std::left << std::setw(24) << average*1E-9
+                << std::endl
+                << std::fixed;
         }
         
         
@@ -357,7 +417,7 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print)
     
 }
 
-void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print)
+void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter)
 {
 
     /*
@@ -373,15 +433,15 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print)
 
     timer time;
 
-    TYPE * sum = (TYPE *)malloc(size*size*sizeof(TYPE)); 
+    TYPE * sum = (TYPE *)std::malloc(size*size*sizeof(TYPE)); 
 
     std::fill(sum,sum+(size*size),0);
-
-    const int DIM = dim;
     
     auto N = static_cast<size_t>(size);
 
     sycl::range<1> global{N};    
+
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
     if (dim == 1)
     {
@@ -392,10 +452,12 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print)
 
         int i;
 
-        time.start_timer();
+        
 
-        for ( i = 0; i < 10; i++)
+        for ( i = 0; i < iter; i++)
         {
+            time.start_timer();
+
             Q.submit([&](sycl::handler& cgh){
                 auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
 
@@ -414,24 +476,36 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print)
 
             });
             Q.wait();
+
+            time.end_timer();
+
+            timings[i] = time.duration();
         }
-        
 
-        time.end_timer();
+        auto minmax = std::minmax_element(timings, timings+iter);
 
+        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
         auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
 
-        if (sum_r[1]!= 1024*10)
+        if (sum_r[1]!= 1024*iter)
         {
-            std::cout << "Verification failed"<< std::endl;
+            std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value"<< sum_r[1]
+                      <<std::endl;
         }
-
-        auto kernel_offload_time = time.duration();
 
         if (print)
         {
-            std::cout << "Total time taken for the execution of range parallel construct with " << dim << " dim \n and buff and acc is " << kernel_offload_time / (10 * 1E9) << " seconds\n"<< std::endl;
+            std::cout
+                << std::left << std::setw(24) << "range_BA"
+                << std::left << std::setw(24) << 1
+                << std::left << std::setw(24) << *minmax.first*1E-9
+                << std::left << std::setw(24) << *minmax.second*1E-9
+                << std::left << std::setw(24) << average*1E-9
+                << std::endl
+                << std::fixed;
         }
         
         
@@ -445,10 +519,10 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print)
 
         int i;
 
-        time.start_timer();
-
-        for ( i = 0; i < 10; i++)
+        for ( i = 0; i < iter; i++)
         {
+            time.start_timer();
+
             Q.submit([&](sycl::handler& cgh){
                 auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
 
@@ -468,26 +542,39 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print)
 
             });
             Q.wait();
+
+            time.end_timer();
+
+            timings[i] = time.duration();
         }
         
+        auto minmax = std::minmax_element(timings, timings+iter);
 
-        time.end_timer();
+        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
         auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
 
 
-        if (sum_r[1]!= 1024*10)
+        if (sum_r[1]!= 1024*iter)
         {
-            std::cout << "Verification failed"<< std::endl;
+            std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value"<< sum_r[1]
+                      <<std::endl;
         }
 
-        auto kernel_offload_time = time.duration();
 
         if (print)
         {
-            std::cout << "Total time taken for the execution of range parallel construct with "<< dim <<" dim \n and buff and acc is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+            std::cout
+                << std::left << std::setw(24) << "range_BA"
+                << std::left << std::setw(24) << 2
+                << std::left << std::setw(24) << *minmax.first*1E-9
+                << std::left << std::setw(24) << *minmax.second*1E-9
+                << std::left << std::setw(24) << average*1E-9
+                << std::endl
+                << std::fixed;
         }
-        
         
     
     } 
@@ -504,7 +591,7 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print)
 // sycl::nd_range constuct
 
 
-void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool print)
+void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool print, int iter)
 {
 
     /*
@@ -513,15 +600,10 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
     * takes values 1 or 2. 
     * 
     * This benchmark tests the overhead incurred for the thread creation. each thread 
-    * computes a small kernel, which corresponds to dealy time. This benchmark uses USM
+    * computes a small kernel, which corresponds to delay time. This benchmark uses USM
     * to store the variables.
     * 
     */
-
-    if (print)
-    {
-        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
-    }
 
     timer time;
 
@@ -530,6 +612,8 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
     std::fill(sum,sum+(size*size),0);
 
     auto N = static_cast<size_t>(size);
+
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
     if (dim == 1)
     {
@@ -545,10 +629,12 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
         }
         sycl::range<1> local{N_b};
 
-        time.start_timer();
+        
 
-        for ( i = 0; i < 10; i++)
+        for ( i = 0; i < iter; i++)
         {
+            time.start_timer();
+
             Q.parallel_for<>(sycl::nd_range<DIM>(global,local), [=](sycl::nd_item<DIM>it){
 
                 auto k = it.get_global_id(0);
@@ -562,22 +648,36 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
             
             });
             Q.wait();
+
+            time.end_timer();
+
+            timings[i] = time.duration();
         }
-        
 
-        time.end_timer();
+        auto minmax = std::minmax_element(timings, timings+iter);
+
+        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
 
-        if (sum[1] != 1024*10)
+        if (sum[1] != 1024*iter)
         {
-            std::cout << "Verification failed"<< std::endl;
+            std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value "<< sum[1]
+                      <<std::endl;
         }
 
-        auto kernel_offload_time = time.duration();
 
         if (print)
         {
-            std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+            std::cout
+                << std::left << std::setw(24) << "ndrange_USM"
+                << std::left << std::setw(24) << 1
+                << std::left << std::setw(24) << *minmax.first*1E-9
+                << std::left << std::setw(24) << *minmax.second*1E-9
+                << std::left << std::setw(24) << average*1E-9
+                << std::endl
+                << std::fixed;
         }
         
         
@@ -598,10 +698,12 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
         }
         sycl::range<2> local{N_b,N_b};
 
-        time.start_timer();
+        
 
-        for ( i = 0; i < 10; i++)
+        for ( i = 0; i < iter; i++)
         {
+            time.start_timer();
+
             Q.parallel_for<>(sycl::nd_range<DIM>(global,local), [=](sycl::nd_item<DIM>it){
 
                 auto k = it.get_global_id(0);
@@ -616,26 +718,35 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
             
             });
             Q.wait();
+
+            time.end_timer();
+
+            timings[i] = time.duration();
         }
-        
 
-        time.end_timer();
+        auto minmax = std::minmax_element(timings, timings+iter);
 
+        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-        if (sum[1] != 1024*10)
+        if (sum[1] != 1024*iter)
         {
-            std::cout << "Verification failed"<< std::endl;
+            std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value"<< sum[1]
+                      << std::endl;
         }
-
-        auto kernel_offload_time = time.duration();
 
         if (print)
         {
-            std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and USM is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+            std::cout
+                << std::left << std::setw(24) << "ndrange_USM"
+                << std::left << std::setw(24) << 2
+                << std::left << std::setw(24) << *minmax.first*1E-9
+                << std::left << std::setw(24) << *minmax.second*1E-9
+                << std::left << std::setw(24) << average*1E-9
+                << std::endl
+                << std::fixed;
         }
-        
-        
-    
 
     }
     else
@@ -647,7 +758,7 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
     
 } 
 
-void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, bool print)
+void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, bool print, int iter)
 {
 
     /*
@@ -661,11 +772,6 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
     * 
     */
 
-    if (print)
-    {
-        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
-    }
-
     timer time;
 
     TYPE * sum = (TYPE *)malloc(size*size*sizeof(TYPE)); 
@@ -675,6 +781,8 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
     auto N = static_cast<size_t>(size);
 
     sycl::range<1> global{N};    
+
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
     if (dim == 1)
     {
@@ -690,13 +798,13 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
         }
         sycl::range<1> local{N_b};
 
-        sycl::buffer<TYPE , 1> sum_buff(sum,size*size);   
+        sycl::buffer<TYPE , 1> sum_buff(sum,size*size);        
 
-
-        time.start_timer();
-
-        for ( i = 0; i < 10; i++)
+        for ( i = 0; i < iter; i++)
         {
+
+            time.start_timer();
+
             Q.submit([&](sycl::handler& cgh){
                 auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
 
@@ -714,25 +822,37 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
             });
             Q.wait();
+
+            time.end_timer();
+
+            timings[i] = time.duration();
         }
-        
 
-        time.end_timer();
+        auto minmax = std::minmax_element(timings, timings+iter);
 
+        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
         auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
 
 
-        if (sum_r[1]!= 1024*10)
+        if (sum_r[1]!= 1024*iter)
         {
-            std::cout << "Verification failed"<< std::endl;
+            std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value"<< sum_r[1]
+                      <<  std::endl;
         }
-
-        auto kernel_offload_time = time.duration();
 
         if (print)
         {
-            std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and buff and acc is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+            std::cout
+                << std::left << std::setw(24) << "ndrange_BA"
+                << std::left << std::setw(24) << 1
+                << std::left << std::setw(24) << *minmax.first*1E-9
+                << std::left << std::setw(24) << *minmax.second*1E-9
+                << std::left << std::setw(24) << average*1E-9
+                << std::endl
+                << std::fixed;
         }
         
         
@@ -753,12 +873,11 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
         sycl::range<2> local{N_b,N_b};
 
         sycl::buffer<TYPE , 1> sum_buff(sum,size*size);
-        
 
-        time.start_timer();
-
-        for ( i = 0; i < 10; i++)
+        for ( i = 0; i < iter; i++)
         {
+            time.start_timer();
+
             Q.submit([&](sycl::handler& cgh){
                 auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
 
@@ -778,24 +897,37 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
             });
             Q.wait();
-        }
-        
 
-        time.end_timer();
+            time.end_timer();
+
+            timings[i] = time.duration();
+        }
+
+        auto minmax = std::minmax_element(timings, timings+iter);
+
+        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
         auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
 
 
-        if (sum_r[1]!= 1024*10)
+        if (sum_r[1]!= 1024*iter)
         {
-            std::cout << "Verification failed"<< std::endl;
+            std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value"<< sum_r[1]
+                      <<std::endl;
         }
-
-        auto kernel_offload_time = time.duration();
 
         if (print)
         {
-            std::cout << "Total time taken for the execution of nd_range parallel construct with "<< dim <<" dim \n and buff and acc is "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+            std::cout
+                << std::left << std::setw(24) << "ndrange_BA"
+                << std::left << std::setw(24) << 2
+                << std::left << std::setw(24) << *minmax.first*1E-9
+                << std::left << std::setw(24) << *minmax.second*1E-9
+                << std::left << std::setw(24) << average*1E-9
+                << std::endl
+                << std::fixed;
         }
         
         
@@ -813,15 +945,15 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
 // reduction 
 
-void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print)
+void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter)
 {
     timer time;
 
     size = size*size;
 
-    auto m = (TYPE *)malloc(size*sizeof(TYPE)); 
+    auto m = (TYPE *)std::malloc(size*sizeof(TYPE)); 
     std::fill(m,m+size,1.0);
-    auto sum = (TYPE *)malloc(1*sizeof(TYPE)); 
+    auto sum = (TYPE *)std::malloc(1*sizeof(TYPE)); 
 
     auto N = static_cast<size_t>(size);
     sycl::range<1> global{N};
@@ -829,14 +961,14 @@ void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print)
     sycl::buffer<TYPE , 1> m_buff(m,size);
 
     sycl::buffer<TYPE , 1> sum_buff(sum,1);
-        
-
+    
     int i;
 
-    time.start_timer();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
+        time.start_timer();
 
         Q.submit([&](sycl::handler& cgh){
             auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
@@ -858,23 +990,36 @@ void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print)
         });
 
         Q.wait();
+
+        time.end_timer();
+
+        timings[i] = time.duration();
     }   
 
-    time.end_timer();
+    auto minmax = std::minmax_element(timings, timings+iter);
 
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
+    
     auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
 
 
-    if (sum_r[0]!= size*10)
+    if (sum_r[0]!= size*iter)
     {
-        std::cout << "Verification failed"<< std::endl;
+        std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value"<< sum_r[0]
+                      <<std::endl;
     }
-
-    auto kernel_offload_time = time.duration();
 
     if (print)
     {
-        std::cout << "Total time taken for reduction using atomics and buffer and accessor memory management  "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        std::cout
+            << std::left << std::setw(24) << "atomics_BA"
+            << std::left << std::setw(24) << *minmax.first*1E-9
+            << std::left << std::setw(24) << *minmax.second*1E-9
+            << std::left << std::setw(24) << average*1E-9
+            << std::endl
+            << std::fixed;
     }
     
     
@@ -882,7 +1027,7 @@ void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print)
     free(sum);
 }
 
-void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print)
+void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print, int iter)
 {
     timer time;
 
@@ -894,15 +1039,15 @@ void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print)
 
     auto N = static_cast<size_t>(size);
     sycl::range<1> global{N};
-    
-    
 
     int i;
 
-    time.start_timer();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
+        time.start_timer();
+
         Q.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 
             auto j = it.get_id(0);
@@ -918,21 +1063,33 @@ void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print)
         });
 
         Q.wait();
+
+        time.end_timer();
+
+        timings[i] = time.duration();
     }   
 
-    time.end_timer();
+    auto minmax = std::minmax_element(timings, timings+iter);
 
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-    if (sum[0]!= size*10)
+    if (sum[0]!= size*iter)
     {
-        std::cout << "Verification failed"<< std::endl;
+        std::cout << "Verification failed "
+                      << "Expected value "<< 1024*iter
+                      << "Final value"<< sum[0]
+                      <<std::endl;
     }
-
-    auto kernel_offload_time = time.duration();
 
     if (print)
     {
-        std::cout << "Total time taken for reduction using atomics and USM memory management  "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        std::cout
+            << std::left << std::setw(24) << "atomics_USM"
+            << std::left << std::setw(24) << *minmax.first*1E-9
+            << std::left << std::setw(24) << *minmax.second*1E-9
+            << std::left << std::setw(24) << average*1E-9
+            << std::endl
+            << std::fixed;
     }
     
     
@@ -943,11 +1100,11 @@ void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print)
 
 #if defined(REDUCTION_IN_SYCL) 
 
-void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print)
+void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
     timer time;
 
-    auto m_shared = (TYPE *)malloc(size*sizeof(TYPE));
+    auto m_shared = (TYPE *)std::malloc(size*sizeof(TYPE));
     std::fill(m_shared,m_shared+size,1.0);
     auto sum = sycl::malloc_shared<TYPE>(1*sizeof(TYPE),Q); Q.wait();
 
@@ -961,13 +1118,13 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
 
     sycl::buffer<TYPE , 1> sum_buff(sum,1);
         
-
     int i;
 
-    time.start_timer();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
+        time.start_timer();
 
         Q.submit([&](sycl::handler& cgh){
             
@@ -991,19 +1148,26 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
         });
 
         Q.wait();
+
+        time.end_timer();
+
+        timings[i] = time.duration();
     }   
 
-    time.end_timer();
+    auto minmax = std::minmax_element(timings, timings+iter);
 
-    auto kernel_offload_time = time.duration();
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     if (print)
     {
-        std::cout << "Total time taken for reduction using SYCL reduction contruct  "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
-    }
-    
-    
-    
+        std::cout
+            << std::left << std::setw(24) << "Reduction"
+            << std::left << std::setw(24) << *minmax.first*1E-9
+            << std::left << std::setw(24) << *minmax.second*1E-9
+            << std::left << std::setw(24) << average*1E-9
+            << std::endl
+            << std::fixed;
+    }   
     
     free(m_shared);
 }
@@ -1011,16 +1175,9 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
 #endif
 
 
-void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print)
+void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
-
-    if (print)
-    {
-        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
-    }
     
-    
-
     timer time;
 
     size = size*size;
@@ -1028,7 +1185,6 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool prin
     TYPE * sum = sycl::malloc_shared<TYPE>(size*sizeof(TYPE),Q); Q.wait();
 
     std::fill(sum,sum+(size),0);
-
     
     auto N = static_cast<size_t>(size);
     sycl::range<1> global{N};
@@ -1042,10 +1198,12 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool prin
 
     int i;
 
-    time.start_timer();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
+        time.start_timer();
+
         Q.parallel_for<class global_barrier_usm>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
             auto k = it.get_global_id(0);
@@ -1059,22 +1217,33 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool prin
         
         });
         Q.wait();
+
+        time.end_timer();
+
+        timings[i] = time.duration();
     }
-    
 
-    time.end_timer();
+    auto minmax = std::minmax_element(timings, timings+iter);
 
-    if (sum[0]!= 1024*10)
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
+
+    if (sum[0]!= 1024*iter)
     {
-        std::cout << "Verification failed"<< std::endl;
+        std::cout << "Verification failed "
+                  << "Expected value "<< 1024*iter
+                  << "Final value"<< sum[0]
+                  <<std::endl;
     }
-
-
-    auto kernel_offload_time = time.duration();
 
     if (print)
     {
-        std::cout << "Total time taken for the global barrier scope with 1 dim \n while using USM "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        std::cout
+            << std::left << std::setw(24) << "G barrier USM"
+            << std::left << std::setw(24) << *minmax.first*1E-9
+            << std::left << std::setw(24) << *minmax.second*1E-9
+            << std::left << std::setw(24) << average*1E-9
+            << std::endl
+            << std::fixed;
     }
     
     
@@ -1085,13 +1254,8 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool prin
 }
 
 
-void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print)
+void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
-
-    if (print)
-    {
-        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
-    }
 
     timer time;
 
@@ -1116,10 +1280,11 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
 
     int i;
 
-    time.start_timer();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
+        time.start_timer();
 
         Q.submit([&](sycl::handler& cgh){
             auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
@@ -1141,23 +1306,35 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
         });
         
         Q.wait();
-    }
-    
 
-    time.end_timer();
+        time.end_timer();
+
+        timings[i] = time.duration();
+    }
+
+    auto minmax = std::minmax_element(timings, timings+iter);
+
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
 
-    if (sum_r[0]!= 1024*10)
+    if (sum_r[0]!= 1024*iter)
     {
-        std::cout << "Verification failed"<< std::endl;
+        std::cout << "Verification failed "
+                  << "Expected value "<< 1024*iter
+                  << "Final value"<< sum_r[0]
+                  <<std::endl;
     }
-
-    auto kernel_offload_time = time.duration();
 
     if (print)
     {
-        std::cout << "Total time taken for the global barrier scope with 1 dim \n while using buffer and accessors "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        std::cout
+            << std::left << std::setw(24) << "G barrier BA"
+            << std::left << std::setw(24) << *minmax.first*1E-9
+            << std::left << std::setw(24) << *minmax.second*1E-9
+            << std::left << std::setw(24) << average*1E-9
+            << std::endl
+            << std::fixed;
     }
     
 
@@ -1167,13 +1344,8 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
 }
 
 
-void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print)
+void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
-
-    if (print)
-    {
-        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
-    }
 
     timer time;
 
@@ -1195,10 +1367,13 @@ void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print
 
     int i;
 
-    time.start_timer();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
+
+        time.start_timer();
+
         Q.parallel_for<class local_barrier_usm>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
             auto k = it.get_global_id(0);
@@ -1213,21 +1388,33 @@ void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print
         
         });
         Q.wait();
+
+        time.end_timer();
+
+        timings[i] = time.duration();
     }
     
+    auto minmax = std::minmax_element(timings, timings+iter);
 
-    time.end_timer();
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-    if (sum[0]!= 1024*10)
+    if (sum[0]!= 1024*iter)
     {
-        std::cout << "Verification failed"<< std::endl;
+        std::cout << "Verification failed "
+                  << "Expected value "<< 1024*iter
+                  << "Final value"<< sum[0]
+                  <<  std::endl;
     }
-
-    auto kernel_offload_time = time.duration();
 
     if (print)
     {
-        std::cout << "Total time taken for the local barrier scope with 1 dim \n while using USM "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        std::cout
+            << std::left << std::setw(24) << "L barrier USM"
+            << std::left << std::setw(24) << *minmax.first*1E-9
+            << std::left << std::setw(24) << *minmax.second*1E-9
+            << std::left << std::setw(24) << average*1E-9
+            << std::endl
+            << std::fixed;
     }
     
 
@@ -1235,13 +1422,8 @@ void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print
 
 }
 
-void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print)
+void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
-
-    if (print)
-    {
-        std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
-    }
 
     timer time;
 
@@ -1265,10 +1447,11 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool 
 
     int i;
 
-    time.start_timer();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
+        time.start_timer();
 
         Q.submit([&](sycl::handler& cgh){
             auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
@@ -1289,23 +1472,35 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool 
         });
         
         Q.wait();
+
+        time.end_timer();
+
+        timings[i] = time.duration();
     }
     
+    auto minmax = std::minmax_element(timings, timings+iter);
 
-    time.end_timer();
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
 
-    if (sum_r[0]!= 1024*10)
+    if (sum_r[0]!= 1024*iter)
     {
-        std::cout << "Verification failed"<< std::endl;
+        std::cout << "Verification failed "
+                << "Expected value "<< 1024*iter
+                << "Final value"<< sum_r[0]
+                << std::endl;
     }
-
-    auto kernel_offload_time = time.duration();
 
     if (print)
     {
-        std::cout << "Total time taken for the local barrier scope with 1 dim \n while using buffer and accessors "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+        std::cout
+            << std::left << std::setw(24) << "L barrier BA"
+            << std::left << std::setw(24) << *minmax.first*1E-9
+            << std::left << std::setw(24) << *minmax.second*1E-9
+            << std::left << std::setw(24) << average*1E-9
+            << std::endl
+            << std::fixed;
     }
     
     free(sum);

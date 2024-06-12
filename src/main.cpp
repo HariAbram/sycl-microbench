@@ -237,12 +237,19 @@ int main(int argc, char* argv[]) {
 
       for (size_t i = 0; i < 10; i++)
       {
+#if defined(DPCPP)
+          volatile TYPE* m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
+          volatile TYPE* a = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
+#else
           TYPE* m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
           TYPE* a = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
+#endif
+
 
           std::fill(a,a+(n_row*n_row),1);
 
           time1.start_timer();
+          
           #pragma omp parallel for 
           for (size_t j = 0; j < n_row*n_row; j++)
           {
@@ -251,7 +258,7 @@ int main(int argc, char* argv[]) {
           
           time1.end_timer();
           timings[i] = time1.duration();
-          free(m);
+          free((TYPE*)m);
       }
 
       auto minmax = std::minmax_element(timings, timings+iter);

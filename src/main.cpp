@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
     if (help)
     {
 
-      std::cout<<"Usage: \n"<< argv[0]<< " [-s size |-b blocksize <optional>|\n"
+      std::cout<<"Usage: \n"<< argv[0]<< " [-s size |-b blocksize <optional>| -t No. iterations\n"
                                         " --mat-mul : to run matrix multiplication \n" 
                                         " --vec-add : to run vector addition \n"
                                         "             can run only mat-mul or vec-add at a time, can't run both simultaneously \n"
@@ -145,6 +145,7 @@ int main(int argc, char* argv[]) {
     sycl::queue Q{};
     std::cout << "running on ..."<< std::endl;
     std::cout << Q.get_device().get_info<sycl::info::device::name>()<<"\n"<<std::endl;
+    
 
     if (mat_mul)
     {
@@ -245,9 +246,9 @@ int main(int argc, char* argv[]) {
 
       auto minmax = std::minmax_element(timings, timings+iter);
 
-      double bandwidth = 1.0E-6 * n_row*n_row*sizeof(TYPE) / (*minmax.first*1E-9);
-
       double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter - 1);
+
+      double bandwidth = 1.0E-6 * n_row*n_row*sizeof(TYPE) / (average*1E-9);
 
       std::cout
           << std::left << std::setw(24) << "std memory"
@@ -373,7 +374,6 @@ int main(int argc, char* argv[]) {
       local_barrier_test_buff_acc(Q, n_row, block_size, true, iter);
 
     }
-
     else
     {
       fprintf(stderr, "No input parameters specified, use --help to see how to use this binary\n"); 

@@ -13,9 +13,7 @@ This is a micro-benchmark for testing the overhead of SYCL features, the followi
 CMake is used to build this benchmark. 
 
 ```
-mkdir build && cd build
-cmake .. -DSYCL_COMPILE= DPCPP|HIPSYCL -DOMP_COMPILE=true|false
-make
+make acpp|intel-llvm|
 ```
 if `HIPSYCL` is chosen as a SYCL implementation then `-DHIPSYCL_INSTALL_DIR` need to be specified. 
 

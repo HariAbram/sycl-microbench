@@ -33,6 +33,7 @@ static struct option long_options[] = {
   {"range", 0, NULL, 'e'},
   {"ndrange", 0, NULL, 'n'},
   {"barrier", 0, NULL, 'w'},
+  {"print-system", 0, NULL, 'p'},
   {"index_m", 1, NULL, 'i'},
   {"iterations", 1, NULL, 't'},
   {"help", 0, NULL, 'h'},
@@ -54,15 +55,15 @@ int main(int argc, char* argv[]) {
     bool range=false;
     bool nd_range=false;
     bool barrier=false;
+    bool print_system=false;
+    bool help = false;
 
     int vec_no = 1;
-
-    bool help = false;
 
     int iter = 10;
 
 
-    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:t:", 
+    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:t:p:", 
           long_options, &option_index)) != -1 ) {
     switch(opt){
       case 's':
@@ -91,6 +92,9 @@ int main(int argc, char* argv[]) {
         break;
       case 'w':
         barrier = true;
+        break;
+      case 'p':
+        print_system = true;
         break;
       case 'i':
         vec_no = atoi(optarg);
@@ -122,7 +126,7 @@ int main(int argc, char* argv[]) {
     if (help)
     {
 
-      std::cout<<"Usage: \n"<< argv[0]<< " [-s size |-b blocksize <optional>| -t No. iterations\n"
+      std::cout<<"Usage: \n"<< argv[0]<< " [-s size |-b blocksize <optional> |-t No. iterations | --print-system\n"
                                         " --mat-mul : to run matrix multiplication \n" 
                                         " --vec-add : to run vector addition \n"
                                         "             can run only mat-mul or vec-add at a time, can't run both simultaneously \n"
@@ -143,8 +147,14 @@ int main(int argc, char* argv[]) {
 
     
     sycl::queue Q{};
-    std::cout << "running on ..."<< std::endl;
-    std::cout << Q.get_device().get_info<sycl::info::device::name>()<<"\n"<<std::endl;
+
+    if (print_system)
+    {
+      std::cout << "running on ..."<< std::endl;
+      std::cout << Q.get_device().get_info<sycl::info::device::name>()<<"\n"<<std::endl;
+    }
+    
+    
     
 
     if (mat_mul)
@@ -236,7 +246,7 @@ int main(int argc, char* argv[]) {
           #pragma omp parallel for 
           for (size_t j = 0; j < n_row*n_row; j++)
           {
-            m[j] = a[1];
+            m[j] = a[j];
           }
           
           time1.end_timer();

@@ -26,7 +26,7 @@ else
 program = bin/main-dpcpp
 endif
 
-source = src/main.cpp src/parallel-bench.cpp src/vectorization-bench.cpp src/timer.cpp
+source = src/main.cpp src/parallel-bench.cpp src/vectorization-bench.cpp src/timer.cpp src/micro-bench-omp.cpp
 
 obj = $(source:.cpp=.o)
 

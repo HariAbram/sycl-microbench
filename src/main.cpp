@@ -14,11 +14,10 @@
 #define TYPE double
 #endif
 
-
 #include "timer.hpp"
 #include "parallel-bench.hpp"
 #include "vectorization-bench.hpp"
-
+#include "micro-bench-omp.hpp"
 
 using namespace cl;
 
@@ -237,6 +236,7 @@ int main(int argc, char* argv[]) {
 
       for (size_t i = 0; i < 10; i++)
       {
+        /*
 #if defined(DPCPP)
           volatile TYPE* m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
           volatile TYPE* a = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
@@ -244,6 +244,10 @@ int main(int argc, char* argv[]) {
           TYPE* m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
           TYPE* a = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
 #endif
+        */
+
+          TYPE* m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
+          TYPE* a = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
 
 
           std::fill(a,a+(n_row*n_row),1);
@@ -297,9 +301,17 @@ int main(int argc, char* argv[]) {
 
       reduction_with_atomics_buf_acc(Q, n_row, true, iter);
 
+      atomic_reduction_omp(n_row, false, 3);
+
+      atomic_reduction_omp(n_row, true, iter);
+
       reduction_with_buf_acc(Q, n_row,  block_size, false, 3);
 
       reduction_with_buf_acc(Q, n_row,  block_size, true, iter);
+
+      reduction_without_atomics_omp(n_row, false, 3);
+
+      reduction_without_atomics_omp(n_row, true, iter);
     }
     else if (range)
     {
@@ -328,6 +340,14 @@ int main(int argc, char* argv[]) {
 
       range_with_buff_acc(Q, n_row ,2,true, iter);
 
+      parallel_for_omp(n_row, false, 3);
+
+      parallel_for_omp(n_row, true, iter);
+
+      parallel_for_omp_nested(n_row, false, 3);
+
+      parallel_for_omp_nested(n_row, true, iter);
+ 
       
     }
     else if (nd_range)
@@ -359,6 +379,14 @@ int main(int argc, char* argv[]) {
       nd_range_with_buff_acc(Q, n_row, block_size ,2, false, 3);
 
       nd_range_with_buff_acc(Q, n_row, block_size ,2, true, iter);
+
+      parallel_for_omp(n_row, false, 3);
+
+      parallel_for_omp(n_row, true, iter);
+
+      parallel_for_omp_nested(n_row, false, 3);
+
+      parallel_for_omp_nested(n_row, true, iter);
     }
     
     else if (barrier)
@@ -389,6 +417,10 @@ int main(int argc, char* argv[]) {
       local_barrier_test_buff_acc(Q, n_row, block_size, false, 3);
 
       local_barrier_test_buff_acc(Q, n_row, block_size, true, iter);
+
+      barrier_test_omp(n_row, false, 3);
+
+      barrier_test_omp(n_row, true, iter);
 
     }
     else

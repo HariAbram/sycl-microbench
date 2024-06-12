@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <chrono>
 #include <omp.h>
+#include <algorithm>
 
 #include "timer.hpp"
 #include "micro-bench-omp.hpp"
@@ -14,76 +15,7 @@
 #define TYPE double
 #endif
 
-static struct option long_options[] = {
-  /* name, has_arg, flag, val */
-  {"block size", 1, NULL, 'b'},
-  {"size", 1, NULL, 's'},
-  {0,0,0,0}
-};
-
-int main(int argc, char* argv[]) {
-
-    int n_row, n_col;
-    n_row = n_col = 1024; // deafult matrix size
-    int opt, option_index=0;
-    int block_size = 16;
-    float *  __restrict__ m1,* __restrict__ m2;
-    int iterations = 5;
-    char * type;
-
-
-    while ((opt = getopt_long(argc, argv, "::s:b:", 
-          long_options, &option_index)) != -1 ) {
-    switch(opt){
-      case 'b':
-        block_size = atoi(optarg);
-        break;
-      case 's':
-        n_col=n_row= atoi(optarg);
-        break;
-      case '?':
-        fprintf(stderr, "invalid option\n");
-        break;
-      case ':':
-        fprintf(stderr, "missing argument\n");
-        break;
-      default:
-        std::cout<<"Usage: "<< argv[0]<< "[-s size |-b blocksize <optional>] \n" << std::endl;
-        exit(EXIT_FAILURE);
-        }
-    }
-    
-   
-    int tile_size = 16;
-
-    parallel_for_omp(n_col, tile_size);
-
-    parallel_for_omp(n_col, tile_size);
-
-    parallel_for_omp_nested(n_col, tile_size);
-
-    parallel_for_omp_nested(n_col, tile_size);
-
-    atomic_reduction_omp(n_col, tile_size);
-
-    atomic_reduction_omp(n_col, tile_size);
-
-    reduction_without_atomics_omp(n_col, tile_size);
-
-    reduction_without_atomics_omp(n_col, tile_size);
-
-    barrier_test_omp(n_col, tile_size);
-
-    barrier_test_omp(n_col, tile_size);
-    
-    kernel_computation();
-
-
-    return 0;
-
-}
-
-void parallel_for_omp(int size, int block_size)
+void parallel_for_omp(int size, bool print, int iter)
 {
     
     timer time;
@@ -94,10 +26,12 @@ void parallel_for_omp(int size, int block_size)
 
     int i;
 
-    time.start_timer();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
+      time.start_timer();
+
       #pragma omp parallel 
       {
         #pragma omp for 
@@ -114,24 +48,41 @@ void parallel_for_omp(int size, int block_size)
 
       }
 
-      
+      time.end_timer();
+
+      timings[i] = time.duration();
     };
        
+    auto minmax = std::minmax_element(timings, timings+iter);
 
-    time.end_timer();
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-    if(sum[0] != 1024*10) std::cout<<"verification failed"<<std::endl;
+    if(sum[0] != 1024*iter) 
+    {
+      std::cout << "Verification failed "
+                << "Expected value "<< 1024*iter
+                << "Final value"<< sum[0]
+                <<std::endl;
+    }
     
 
-    auto kernel_offload_time = time.duration();
-
-    std::cout << "Total time taken for the execution of parallel for in omp "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+    if (print)
+    {
+        std::cout
+            << std::left << std::setw(24) << "OMP_parallel"
+            << std::left << std::setw(24) << 1
+            << std::left << std::setw(24) << *minmax.first*1E-9
+            << std::left << std::setw(24) << *minmax.second*1E-9
+            << std::left << std::setw(24) << average*1E-9
+            << std::endl
+            << std::fixed;
+    }
     
     free(sum);
 
 }
 
-void parallel_for_omp_nested(int size, int block_size)
+void parallel_for_omp_nested(int size, bool print, int iter)
 {
     
     timer time;
@@ -142,10 +93,14 @@ void parallel_for_omp_nested(int size, int block_size)
 
     int i;
 
-    time.start_timer();
+    auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    
+
+    for ( i = 0; i < iter; i++)
     {
+      time.start_timer();
+
       #pragma omp parallel  
       {
         #pragma omp for collapse(2)
@@ -160,25 +115,44 @@ void parallel_for_omp_nested(int size, int block_size)
           }
         };
       }
+
+      time.end_timer();
+
+      timings[i] = time.duration();
+
       if(sum[0] < 0)std::cout<<sum<<std::endl;
 
     };
-       
 
-    time.end_timer();
+    auto minmax = std::minmax_element(timings, timings+iter);
 
-    if(sum[0] != 1024*10) std::cout<<"verification failed"<<std::endl;
+    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
+    if(sum[0] != 1024*iter)
+    {
+      std::cout << "Verification failed "
+                << "Expected value "<< 1024*iter
+                << "Final value"<< sum[0]
+                <<std::endl;
+    }
 
-    auto kernel_offload_time = time.duration();
-
-    std::cout << "Total time taken for the execution of nested parallel for in omp "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+    if (print)
+    {
+        std::cout
+            << std::left << std::setw(24) << "OMP_parallel_nested"
+            << std::left << std::setw(24) << 1
+            << std::left << std::setw(24) << *minmax.first*1E-9
+            << std::left << std::setw(24) << *minmax.second*1E-9
+            << std::left << std::setw(24) << average*1E-9
+            << std::endl
+            << std::fixed;
+    }
     
     free(sum);
 
 }
 
-void atomic_reduction_omp( int size, int block_size)
+void atomic_reduction_omp( int size, bool print, int iter)
 {
   timer time;
 
@@ -189,10 +163,14 @@ void atomic_reduction_omp( int size, int block_size)
   int i;
   TYPE sum = 0.0;
 
-  time.start_timer();
+  auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-  for ( i = 0; i < 10; i++)
+  
+
+  for ( i = 0; i < iter; i++)
   {
+
+    time.start_timer();
     
     #pragma omp parallel for private(sum)
     for (size_t j = 0; j < size*size; j++)        
@@ -202,23 +180,40 @@ void atomic_reduction_omp( int size, int block_size)
 
     };
 
+    time.end_timer();
+
+    timings[i] = time.duration();
+
     if(sum < 0) std::cout<<sum<<std::endl;
   };
-      
-  
-  time.end_timer();
 
-  
+  auto minmax = std::minmax_element(timings, timings+iter);
 
+  double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-  auto kernel_offload_time = time.duration();
+  if (sum!= size*size*iter)
+  {
+    std::cout << "Verification failed "
+              << "Expected value "<< size*size*iter
+              << "Final value"<< sum
+              <<std::endl;
+  }
 
-  std::cout << "Total time taken for the execution of atomic construct in omp "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
-  
+  if (print)
+  {
+      std::cout
+          << std::left << std::setw(24) << "OMP_atomics"
+          << std::left << std::setw(24) << *minmax.first*1E-9
+          << std::left << std::setw(24) << *minmax.second*1E-9
+          << std::left << std::setw(24) << average*1E-9
+          << std::endl
+          << std::fixed;
+  }
+
   free(m);
 }
 
-void reduction_without_atomics_omp(int size, int tile_size)
+void reduction_without_atomics_omp(int size, bool print, int iter)
 {
 
   timer time;
@@ -226,15 +221,16 @@ void reduction_without_atomics_omp(int size, int tile_size)
   TYPE * m = (TYPE * )malloc(sizeof(TYPE)*size*size); 
   std::fill(m , m+(size*size),1);
   
-
   int i;
   TYPE sum = 0.0;
 
-  time.start_timer();
+  auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-  for ( i = 0; i < 10; i++)
+  for ( i = 0; i < iter; i++)
   {
-     
+
+    time.start_timer();
+
     #pragma omp parallel for reduction(+:sum) 
     for (size_t j = 0; j < size*size; j++)        
     {
@@ -242,24 +238,41 @@ void reduction_without_atomics_omp(int size, int tile_size)
 
     };
 
+    time.end_timer();
+
+    timings[i] = time.duration();
+
     if(sum < 0) std::cout<<sum<<std::endl;
   };
-      
-  
-  time.end_timer();
 
-  
+  auto minmax = std::minmax_element(timings, timings+iter);
 
+  double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-  auto kernel_offload_time = time.duration();
+  if (sum!= size*size*iter)
+  {
+    std::cout << "Verification failed "
+              << "Expected value "<< size*size*iter
+              << "Final value"<< sum
+              <<std::endl;
+  }
 
-  std::cout << "Total time taken for the execution of reduction construct in omp "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+  if (print)
+  {
+      std::cout
+          << std::left << std::setw(24) << "OMP_reduction"
+          << std::left << std::setw(24) << *minmax.first*1E-9
+          << std::left << std::setw(24) << *minmax.second*1E-9
+          << std::left << std::setw(24) << average*1E-9
+          << std::endl
+          << std::fixed;
+  }
   
   free(m);
 
 }
 
-void barrier_test_omp(int size, int block_size)
+void barrier_test_omp(int size, bool print, int iter)
 {
 
   timer time;
@@ -270,10 +283,12 @@ void barrier_test_omp(int size, int block_size)
 
   int i;
 
-  time.start_timer();
+  auto timings = (double*)std::malloc(sizeof(double)*iter); 
 
-  for ( i = 0; i < 10; i++)
+  for ( i = 0; i < iter; i++)
   {
+    time.start_timer();
+
     #pragma omp parallel 
     {
       #pragma omp for
@@ -289,19 +304,37 @@ void barrier_test_omp(int size, int block_size)
 
       #pragma omp barrier
     }
-    
 
+    time.end_timer();
+
+    timings[i] = time.duration();
+    
     if(sum[0] < 0) std::cout<<sum<<std::endl;
   };
-      
 
-  time.end_timer();
+  auto minmax = std::minmax_element(timings, timings+iter);
 
-  if(sum[0] != 1024*10) std::cout<<"verification failed "<< sum[0] <<std::endl;
+  double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-  auto kernel_offload_time = time.duration();
+  if(sum[0] != 1024*iter)
+  {
+    std::cout << "Verification failed "
+              << "Expected value "<< 1024*iter
+              << "Final value"<< sum[0]
+              <<std::endl;
+  }
 
-  std::cout << "Total time taken for the execution of barrier construct in omp "<< kernel_offload_time/(10*1E9) << " seconds\n" << std::endl;
+  if (print)
+  {
+      std::cout
+          << std::left << std::setw(24) << "OMP_barriers"
+          << std::left << std::setw(24) << 1
+          << std::left << std::setw(24) << *minmax.first*1E-9
+          << std::left << std::setw(24) << *minmax.second*1E-9
+          << std::left << std::setw(24) << average*1E-9
+          << std::endl
+          << std::fixed;
+  }
   
   free(sum);
 

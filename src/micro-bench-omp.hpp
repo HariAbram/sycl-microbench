@@ -8,15 +8,15 @@
 #include <omp.h>
 
 
-void parallel_for_omp(int size, int block_size);
+void parallel_for_omp(int size, bool print, int iter);
 
-void parallel_for_omp_nested(int size, int block_size);
+void parallel_for_omp_nested(int size, bool print, int iter);
 
-void atomic_reduction_omp( int size, int block_size);
+void atomic_reduction_omp( int size, bool print, int iter);
 
-void reduction_without_atomics_omp(int size, int tile_size);
+void reduction_without_atomics_omp(int size, bool print, int iter);
 
-void barrier_test_omp(int size, int block_size);
+void barrier_test_omp(int size, bool print, int iter);
 
 void kernel_computation();
 ///////////////

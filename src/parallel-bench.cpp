@@ -246,6 +246,14 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     for (size_t i = 0; i < iter; i++)
     {
         sycl::range<1> global{N*N};
+        auto N_b = static_cast<size_t>(block_size);
+        if (block_size > size)
+        {
+            std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
+            N_b = N;
+        }
+        sycl::range<1> local{N_b};
+
         auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
 
         auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
@@ -253,9 +261,9 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
         time1.start_timer();
         
-        Q.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
+        Q.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
-            auto k = it.get_id(0);
+            auto k = it.get_global_id(0);
 
             m_shared[k] = a_shared[k];
 
@@ -360,6 +368,14 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     for (size_t i = 0; i < iter; i++)
     {
         sycl::range<1> global{N*N};
+        auto N_b = static_cast<size_t>(block_size);
+        if (block_size > size)
+        {
+            std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
+            N_b = N;
+        }
+        sycl::range<1> local{N_b};
+
         auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
 
         auto a_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
@@ -367,9 +383,9 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
         time1.start_timer();
 
-        Q.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
+        Q.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
-            auto k = it.get_id(0);
+            auto k = it.get_global_id(0);
 
             m_device[k] = a_device[k];
 

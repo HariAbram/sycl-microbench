@@ -62,9 +62,7 @@ void vec_add_range_usm(sycl::queue &Q, int size)
     auto N = static_cast<size_t>(size);
 
     sycl::range<1> global{N};
-
-    int i;
-    
+   
 
     Q.parallel_for<class vec_add_r_usm>(sycl::range<1>(global), [=](sycl::item<1>it){
 
@@ -99,8 +97,6 @@ void vec_add_range_buff_acc(sycl::queue &Q, int size)
     auto N = static_cast<size_t>(size);
 
     sycl::range<1> global{N};
-
-    int i;
     
     Q.submit([&](sycl::handler& cgh){
         auto v1_acc = v1_buff.get_access<sycl::access::mode::read>(cgh);
@@ -146,10 +142,6 @@ void vec_add_ndrange_usm(sycl::queue &Q, int size, int block_size)
     }
     sycl::range<1> local{N_b};
 
-    int i;
-
-    
-
     Q.parallel_for<class vec_add_ndr_usm>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
         auto i = it.get_global_id(0);
@@ -190,9 +182,6 @@ void vec_add_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
         N_b = N;
     }
     sycl::range<1> local{N_b};
-
-    int i;
-
    
     Q.submit([&](sycl::handler& cgh){
         auto v1_acc = v1_buff.get_access<sycl::access::mode::read>(cgh);
@@ -246,7 +235,7 @@ void mat_mul_range_usm(sycl::queue &Q, int size)
         auto i = it.get_id(0);
         auto j = it.get_id(1);
 
-        float temp = 0;
+        float temp = 0.0;
 
         for (size_t k = 0; k < N; k++)
         {

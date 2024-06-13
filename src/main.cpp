@@ -207,17 +207,17 @@ int main(int argc, char* argv[]) {
           << std::endl
           << std::fixed;
 
-      host_memory_alloc(Q, n_row, false, 3);
+      host_memory_alloc(Q, n_row,  block_size, false, 3);
 
-      host_memory_alloc(Q, n_row, true, iter);
+      host_memory_alloc(Q, n_row,  block_size, true, iter);
 
-      shared_memory_alloc(Q, n_row,false, 3);
+      shared_memory_alloc(Q, n_row,  block_size,false, 3);
 
-      shared_memory_alloc(Q, n_row,true, iter);
+      shared_memory_alloc(Q, n_row,  block_size,true, iter);
 
-      device_memory_alloc(Q, n_row,false, 3);
+      device_memory_alloc(Q, n_row,  block_size,false, 3);
 
-      device_memory_alloc(Q, n_row,true, iter);
+      device_memory_alloc(Q, n_row,  block_size,true, iter);
 
       timer time;
       timer time1;

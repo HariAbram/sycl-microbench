@@ -270,7 +270,7 @@ int main(int argc, char* argv[]) {
 
       double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter - 1);
 
-      double bandwidth = 1.0E-6 * n_row*n_row*sizeof(TYPE) / (average*1E-9);
+      double bandwidth = 1.0E-6 * 2 *n_row*n_row*sizeof(TYPE) / (average*1E-9);
 
       std::cout
           << std::left << std::setw(24) << "std memory"

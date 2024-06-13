@@ -102,7 +102,7 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
     auto minmax = std::minmax_element(timings, timings+iter);
 
-    double bandwidth = 1.0E-6 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
+    double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
     double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
@@ -155,7 +155,7 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
     minmax = std::minmax_element(timings_nd, timings_nd+iter);
 
-    bandwidth = 1.0E-6 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
+    bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
     average = std::accumulate(timings_nd, timings_nd+iter, 0.0) / (double)(iter);
 
@@ -226,7 +226,7 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     auto minmax = std::minmax_element(timings, timings+iter);
 
-    double bandwidth = 1.0E-6 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
+    double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
     double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
@@ -279,7 +279,7 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     minmax = std::minmax_element(timings_nd, timings_nd+iter);
 
-    bandwidth = 1.0E-6 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
+    bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
     average = std::accumulate(timings_nd, timings_nd+iter, 0.0) / (double)(iter);
 
@@ -348,7 +348,7 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     auto minmax = std::minmax_element(timings, timings+iter);
 
-    double bandwidth = 1.0E-6 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
+    double bandwidth = 1.0E-6 * 2 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
     double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
@@ -401,7 +401,7 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     minmax = std::minmax_element(timings_nd, timings_nd+iter);
 
-    bandwidth = 1.0E-6 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
+    bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
     average = std::accumulate(timings_nd, timings_nd+iter, 0.0) / (double)(iter);
 

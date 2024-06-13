@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
  
       auto timings = (double*)malloc(sizeof(double)*iter);
 
-      for (size_t i = 0; i < 10; i++)
+      for (size_t i = 0; i < iter; i++)
       {
         /*
 #if defined(DPCPP)
@@ -263,6 +263,7 @@ int main(int argc, char* argv[]) {
           time1.end_timer();
           timings[i] = time1.duration();
           free((TYPE*)m);
+          free((TYPE*)a);
       }
 
       auto minmax = std::minmax_element(timings, timings+iter);

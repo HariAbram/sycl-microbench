@@ -63,16 +63,15 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
         auto m = (TYPE*)std::malloc(size*size*sizeof(TYPE)); 
 
         auto a = (TYPE*)std::malloc(size*size*sizeof(TYPE));
-        
-        std::fill(a,a+(size*size),1);
+
+        std::fill(m,m+(size*size),0.0);
+        std::fill(a,a+(size*size),1.0);
 
         sycl::range<1> global{N*N};
 
-        //sycl::buffer<TYPE , 1> m_buff((TYPE*)m,size*size);
-        //sycl::buffer<TYPE , 1> a_buff((TYPE*)a,size*size);
+        sycl::buffer<TYPE , 1> m_buff((TYPE*)m,size*size);
+        sycl::buffer<TYPE , 1> a_buff((TYPE*)a,size*size);
 
-        sycl::buffer<TYPE , 1> m_buff(size*size);
-        sycl::buffer<TYPE , 1> a_buff(size*size);
 
         time.start_timer();
 

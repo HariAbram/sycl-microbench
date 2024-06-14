@@ -13,6 +13,8 @@ double delay_time();
 
 // memory allocation 
 
+void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int iter);
+
 void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int iter);
 
 void shared_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int iter);

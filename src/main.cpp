@@ -219,6 +219,10 @@ int main(int argc, char* argv[]) {
 
       device_memory_alloc(Q, n_row,  block_size,true, iter);
 
+      memory_alloc(Q, n_row, block_size , false, 3);
+
+      memory_alloc(Q, n_row, block_size , true, iter);
+
       timer time;
       timer time1;
 
@@ -236,15 +240,6 @@ int main(int argc, char* argv[]) {
 
       for (size_t i = 0; i < iter; i++)
       {
-        /*
-#if defined(DPCPP)
-          volatile TYPE* m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
-          volatile TYPE* a = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
-#else
-          TYPE* m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
-          TYPE* a = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
-#endif
-        */
 
           TYPE* m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
           TYPE* a = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);

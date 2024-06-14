@@ -34,3 +34,8 @@ double timer::duration()
     return (double) this->duration_timer.count(); 
 }
 
+double timer::duration(bool temp)
+{
+    auto duration_double = std::chrono::duration_cast<std::chrono::duration<double>>(this->end_time  - this->start_time).count();
+    return duration_double; 
+}

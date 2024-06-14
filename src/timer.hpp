@@ -21,4 +21,5 @@ public:
     void start_timer();
     void end_timer();
     double duration();
+    double duration(bool temp);
 };

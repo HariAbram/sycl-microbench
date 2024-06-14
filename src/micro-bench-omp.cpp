@@ -328,7 +328,6 @@ void barrier_test_omp(int size, bool print, int iter)
   {
       std::cout
           << std::left << std::setw(24) << "OMP_barriers"
-          << std::left << std::setw(24) << 1
           << std::left << std::setw(24) << *minmax.first*1E-9
           << std::left << std::setw(24) << *minmax.second*1E-9
           << std::left << std::setw(24) << average*1E-9

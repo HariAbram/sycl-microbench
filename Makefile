@@ -38,7 +38,7 @@ obj = $(source:.cpp=.o)
 CFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DREDUCTION_IN_SYCL -DTYPE=float
 
 ifeq ($(VENDOR), acpp)
-CFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp
+CFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated
 else
 CFLAGS += -fsycl -DDPCPP
 endif

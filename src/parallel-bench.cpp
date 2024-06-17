@@ -192,11 +192,11 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
         Q.submit([&](sycl::handler& cgh){
 
-            cgh.parallel_for<class host_memory>(sycl::range<1>(global), [=](sycl::item<1> it){
+            cgh.parallel_for<class host_memory>(sycl::range<1>(global), [=, m=m_host, a=a_host](sycl::item<1> it){
 
                 const int k = it.get_id(0);
 
-                m_host[k] = a_host[k];
+                m[k] = a[k];
 
             });
         });

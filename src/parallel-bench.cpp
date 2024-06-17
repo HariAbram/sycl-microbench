@@ -150,15 +150,12 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 /*
     auto minmax = std::minmax_element(timings_alloc, timings_alloc+iter);
 
-    double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
-
     double average = std::accumulate(timings_alloc, timings_alloc+iter, 0.0) / (double)(iter);
 
     if (print)
     {
         std::cout
           << std::left << std::setw(24) << "Host memory alloc"
-          << std::left << std::setw(24) << bandwidth
           << std::left << std::setw(24) << *minmax.first*1E-9
           << std::left << std::setw(24) << *minmax.second*1E-9
           << std::left << std::setw(24) << average*1E-9
@@ -180,7 +177,7 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
         sycl::range<1> global{N*N};
         time1.start_timer();
 
-        Q.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
+        Q.parallel_for<class host_memory>(sycl::range<1>(global), [=](sycl::item<1>it){
 
             const int k = it.get_id(0);
 
@@ -297,15 +294,12 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 /*
     auto minmax = std::minmax_element(timings_alloc, timings_alloc+iter);
 
-    double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
-
     double average = std::accumulate(timings_alloc, timings_alloc+iter, 0.0) / (double)(iter);
 
     if (print)
     {
         std::cout
           << std::left << std::setw(24) << "shared memory alloc"
-          << std::left << std::setw(24) << bandwidth
           << std::left << std::setw(24) << *minmax.first*1E-9
           << std::left << std::setw(24) << *minmax.second*1E-9
           << std::left << std::setw(24) << average*1E-9
@@ -444,15 +438,12 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 /*
     auto minmax = std::minmax_element(timings_alloc, timings_alloc+iter);
 
-    double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
-
     double average = std::accumulate(timings_alloc, timings_alloc+iter, 0.0) / (double)(iter);
 
     if (print)
     {
         std::cout
           << std::left << std::setw(24) << "Device memory alloc"
-          << std::left << std::setw(24) << bandwidth
           << std::left << std::setw(24) << *minmax.first*1E-9
           << std::left << std::setw(24) << *minmax.second*1E-9
           << std::left << std::setw(24) << average*1E-9

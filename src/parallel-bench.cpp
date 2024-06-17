@@ -77,7 +77,7 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
 
         Q.submit([&](sycl::handler& cgh){
 
-            auto m_acc = m_buff.get_access<sycl::access::mode::discard_write>(cgh);
+            auto m_acc = m_buff.get_access<sycl::access::mode::write>(cgh);
             auto a_acc = a_buff.get_access<sycl::access::mode::read>(cgh);
 
             cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){

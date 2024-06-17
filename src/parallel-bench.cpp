@@ -174,18 +174,19 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
     auto timings = (double*)std::malloc(sizeof(double)*iter);
 
     auto timings_nd = (double*)std::malloc(sizeof(double)*iter);
+    
+    auto m_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
+    auto a_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
+
+    std::fill(m_host,m_host+(size*size),0.0);
+    std::fill(a_host,a_host+(size*size),1.0);
+
+    Q.wait();
+
+    sycl::range<1> global{N*N};
 
     for (size_t i = 0; i < iter; i++)
-    {
-        auto m_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
-        auto a_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
-
-        std::fill(m_host,m_host+(size*size),0.0);
-        std::fill(a_host,a_host+(size*size),0.0);
-
-        Q.wait();
-
-        sycl::range<1> global{N*N};
+    {    
         time1.start_timer();
 
         Q.submit([&](sycl::handler& cgh){
@@ -202,9 +203,11 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
         time1.end_timer();
         timings[i] = time1.duration();
-        free(m_host,Q);
-        free(a_host,Q);
+        
     }
+
+    //sycl::free(m_host,Q);
+    //sycl::free(a_host,Q);
 
     minmax = std::minmax_element(timings, timings+iter);
 
@@ -225,24 +228,24 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
     
     ///////////////////////////////////////////
 
+    //auto m_host  = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
+
+    //auto a_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
+    std::fill(a_host,a_host+(size*size),1.0);
+
+    Q.wait();
+
+    auto N_b = static_cast<size_t>(block_size);
+    if (block_size > size)
+    {
+        std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
+        N_b = N;
+    }
+    sycl::range<1> local{N_b};
+
     for (size_t i = 0; i < iter; i++)
     {
-        auto m_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
         std::fill(m_host,m_host+(size*size),0.0);
-
-        auto a_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_host,a_host+(size*size),1.0);
-
-        Q.wait();
-
-        sycl::range<1> global{N*N};
-        auto N_b = static_cast<size_t>(block_size);
-        if (block_size > size)
-        {
-            std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
-            N_b = N;
-        }
-        sycl::range<1> local{N_b};
 
         time1.start_timer();
 
@@ -258,9 +261,11 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
         time1.end_timer();
         timings_nd[i] = time1.duration();
-        free(m_host,Q);
-        free(a_host,Q);
+        
     }
+    
+    sycl::free(m_host,Q);
+    sycl::free(a_host,Q);
 
     minmax = std::minmax_element(timings_nd, timings_nd+iter);
 
@@ -328,15 +333,15 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     auto timings_nd = (double*)std::malloc(sizeof(double)*iter);
 
+    sycl::range<1> global{N*N};
+    auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
+    std::fill(m_shared,m_shared+(size*size),0.0);
+
+    auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
+    std::fill(a_shared,a_shared+(size*size),1.0);
+
     for (size_t i = 0; i < iter; i++)
     {
-        sycl::range<1> global{N*N};
-        auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
-        std::fill(m_shared,m_shared+(size*size),0.0);
-
-        auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_shared,a_shared+(size*size),1.0);
-
         Q.wait();
 
         time1.start_timer();
@@ -346,16 +351,17 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
             const int k = it.get_id(0);
 
             m_shared[k] = a_shared[k];
-
         
         });
         Q.wait();
 
         time1.end_timer();
         timings[i] = time1.duration();
-        free(m_shared,Q);
-        free(a_shared,Q);
+        
     }
+
+    //free(m_shared,Q);
+    //free(a_shared,Q);
 
     minmax = std::minmax_element(timings, timings+iter);
 
@@ -375,25 +381,25 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     }
 
     ///////////////////////////////////////////////
+
+    auto N_b = static_cast<size_t>(block_size);
+    if (block_size > size)
+    {
+        std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
+        N_b = N;
+    }
+    sycl::range<1> local{N_b};
+
+    //auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
+
+    //auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
+    std::fill(a_shared,a_shared+(size*size),1.0);
+
+    Q.wait();
     
     for (size_t i = 0; i < iter; i++)
     {
-        sycl::range<1> global{N*N};
-        auto N_b = static_cast<size_t>(block_size);
-        if (block_size > size)
-        {
-            std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
-            N_b = N;
-        }
-        sycl::range<1> local{N_b};
-
-        auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
         std::fill(m_shared,m_shared+(size*size),0.0);
-
-        auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_shared,a_shared+(size*size),1.0);
-
-        Q.wait();
 
         time1.start_timer();
         
@@ -409,9 +415,11 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
         time1.end_timer();
         timings_nd[i] = time1.duration();
-        free(m_shared,Q);
-        free(a_shared,Q);
+        
     }
+
+    free(m_shared,Q);
+    free(a_shared,Q);
 
     minmax = std::minmax_element(timings_nd, timings_nd+iter);
 
@@ -478,16 +486,17 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     auto timings_nd = (double*)std::malloc(sizeof(double)*iter);
 
+    sycl::range<1> global{N*N};
+    auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
+    std::fill(m_device,m_device+(size*size),0.0);
+
+    auto a_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
+    std::fill(a_device,a_device+(size*size),1.0);
+    
+    Q.wait();
+
     for (size_t i = 0; i < iter; i++)
     {
-        sycl::range<1> global{N*N};
-        auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
-        std::fill(m_device,m_device+(size*size),0.0);
-
-        auto a_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_device,a_device+(size*size),1.0);
-        
-        Q.wait();
 
         time1.start_timer();
 
@@ -503,9 +512,11 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
         time1.end_timer();
         timings[i] = time1.duration();
-        free(m_device,Q);
-        free(a_device,Q);
+        
     }
+
+    //free(m_device,Q);
+    //free(a_device,Q);
 
     minmax = std::minmax_element(timings, timings+iter);
 
@@ -526,25 +537,26 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     /////////////////////////////////////////////////
 
+    auto N_b = static_cast<size_t>(block_size);
+    if (block_size > size)
+    {
+        std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
+        N_b = N;
+    }
+    sycl::range<1> local{N_b};
+
+    //auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
+    
+
+    //auto a_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
+    std::fill(a_device,a_device+(size*size),1);
+
+    Q.wait();
+
     for (size_t i = 0; i < iter; i++)
     {
-        sycl::range<1> global{N*N};
-        auto N_b = static_cast<size_t>(block_size);
-        if (block_size > size)
-        {
-            std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
-            N_b = N;
-        }
-        sycl::range<1> local{N_b};
-
-        auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
         std::fill(m_device,m_device+(size*size),0.0);
-
-        auto a_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_device,a_device+(size*size),1);
-
-        Q.wait();
-
+        
         time1.start_timer();
 
         Q.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
@@ -558,10 +570,11 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
         Q.wait();
 
         time1.end_timer();
-        timings_nd[i] = time1.duration();
-        free(m_device,Q);
-        free(a_device,Q);
+        timings_nd[i] = time1.duration();    
     }
+
+    free(m_device,Q);
+    free(a_device,Q);
 
     minmax = std::minmax_element(timings_nd, timings_nd+iter);
 

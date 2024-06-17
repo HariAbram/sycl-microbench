@@ -238,11 +238,11 @@ int main(int argc, char* argv[]) {
  
       auto timings = (double*)malloc(sizeof(double)*iter);
 
+      TYPE* m = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*n_row*n_row);
+      TYPE* a = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*n_row*n_row);
+
       for (size_t i = 0; i < iter; i++)
       {
-
-          TYPE* m = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*n_row*n_row);
-          TYPE* a = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*n_row*n_row);
 
           std::fill(m,m+(n_row*n_row),0.0);
           std::fill(a,a+(n_row*n_row),1.0);
@@ -257,9 +257,11 @@ int main(int argc, char* argv[]) {
           
           time1.end_timer();
           timings[i] = time1.duration();
-          free(m);
-          free(a);
+          
       }
+
+      free(m);
+      free(a);
 
       auto minmax = std::minmax_element(timings, timings+iter);
 

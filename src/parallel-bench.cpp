@@ -60,17 +60,7 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
 
     for (i = 0; i < iter; i++)
     {
-        auto m = (TYPE*)std::malloc(size*size*sizeof(TYPE)); 
-
-        auto a = (TYPE*)std::malloc(size*size*sizeof(TYPE));
-
-        std::fill(m,m+(size*size),0.0);
-        std::fill(a,a+(size*size),1.0);
-
         sycl::range<1> global{N*N};
-
-        //sycl::buffer<TYPE , 1> m_buff((TYPE*)m,size*size);
-        //sycl::buffer<TYPE , 1> a_buff((TYPE*)a,size*size);
 
         sycl::buffer<TYPE , 1> m_buff(global);
         sycl::buffer<TYPE , 1> a_buff(global);
@@ -116,8 +106,6 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
         
         time.end_timer();
         timings[i] = time.duration();
-        free(m);
-        free(a);
     }
     
     auto minmax = std::minmax_element(timings, timings+iter);
@@ -156,7 +144,7 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
     auto timings_alloc = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
         time.start_timer();
 
@@ -169,7 +157,7 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
         timings_alloc[i] = time.duration();
 
     }
-/*
+
     auto minmax = std::minmax_element(timings_alloc, timings_alloc+iter);
 
     double average = std::accumulate(timings_alloc, timings_alloc+iter, 0.0) / (double)(iter);
@@ -178,12 +166,13 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
     {
         std::cout
           << std::left << std::setw(24) << "Host memory alloc"
+          << std::left << std::setw(24) << " "
           << std::left << std::setw(24) << *minmax.first*1E-9
           << std::left << std::setw(24) << *minmax.second*1E-9
           << std::left << std::setw(24) << average*1E-9
           << std::endl;
     }
-*/    
+   
     
     auto timings = (double*)std::malloc(sizeof(double)*iter);
 
@@ -192,9 +181,12 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
     for (size_t i = 0; i < iter; i++)
     {
         auto m_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
-
         auto a_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_host,a_host+(size*size),1);
+
+        std::fill(m_host,m_host+(size*size),0.0);
+        std::fill(a_host,a_host+(size*size),0.0);
+
+        Q.wait();
 
         sycl::range<1> global{N*N};
         time1.start_timer();
@@ -215,11 +207,11 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
         free(a_host,Q);
     }
 
-    auto minmax = std::minmax_element(timings, timings+iter);
+    minmax = std::minmax_element(timings, timings+iter);
 
     double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
+    average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     if (print)
     {
@@ -237,9 +229,12 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
     for (size_t i = 0; i < iter; i++)
     {
         auto m_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
+        std::fill(m_host,m_host+(size*size),0.0);
 
         auto a_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
         std::fill(a_host,a_host+(size*size),1);
+
+        Q.wait();
 
         sycl::range<1> global{N*N};
         auto N_b = static_cast<size_t>(block_size);
@@ -304,7 +299,7 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     auto timings_alloc = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
         time.start_timer();
         auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
@@ -313,7 +308,7 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
         timings_alloc[i] = time.duration();
     }
-/*
+
     auto minmax = std::minmax_element(timings_alloc, timings_alloc+iter);
 
     double average = std::accumulate(timings_alloc, timings_alloc+iter, 0.0) / (double)(iter);
@@ -322,13 +317,14 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     {
         std::cout
           << std::left << std::setw(24) << "shared memory alloc"
+          << std::left << std::setw(24) << " "
           << std::left << std::setw(24) << *minmax.first*1E-9
           << std::left << std::setw(24) << *minmax.second*1E-9
           << std::left << std::setw(24) << average*1E-9
           << std::endl;
     }
     
-*/
+
     auto timings = (double*)std::malloc(sizeof(double)*iter);
 
     auto timings_nd = (double*)std::malloc(sizeof(double)*iter);
@@ -337,9 +333,12 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     {
         sycl::range<1> global{N*N};
         auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
+        std::fill(m_share,m_shared+(size*size),0.0);
 
         auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_shared,a_shared+(size*size),1);
+        std::fill(a_shared,a_shared+(size*size),1.0);
+
+        Q.wait();
 
         time1.start_timer();
         
@@ -359,11 +358,11 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
         free(a_shared,Q);
     }
 
-    auto minmax = std::minmax_element(timings, timings+iter);
+    minmax = std::minmax_element(timings, timings+iter);
 
     double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
+    average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     if (print)
     {
@@ -390,9 +389,12 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
         sycl::range<1> local{N_b};
 
         auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
+        std::fill(m_share,m_shared+(size*size),0.0);
 
         auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_shared,a_shared+(size*size),1);
+        std::fill(a_shared,a_shared+(size*size),1.0);
+
+        Q.wait();
 
         time1.start_timer();
         
@@ -447,7 +449,7 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     auto timings_alloc = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < 10; i++)
+    for ( i = 0; i < iter; i++)
     {
         time.start_timer();
         auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
@@ -457,7 +459,7 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
         timings_alloc[i] = time.duration();
 
     }
-/*
+
     auto minmax = std::minmax_element(timings_alloc, timings_alloc+iter);
 
     double average = std::accumulate(timings_alloc, timings_alloc+iter, 0.0) / (double)(iter);
@@ -466,12 +468,13 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     {
         std::cout
           << std::left << std::setw(24) << "Device memory alloc"
+          << std::left << std::setw(24) << " "
           << std::left << std::setw(24) << *minmax.first*1E-9
           << std::left << std::setw(24) << *minmax.second*1E-9
           << std::left << std::setw(24) << average*1E-9
           << std::endl;
     }
-*/
+
     auto timings = (double*)std::malloc(sizeof(double)*iter);
 
     auto timings_nd = (double*)std::malloc(sizeof(double)*iter);
@@ -480,9 +483,12 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     {
         sycl::range<1> global{N*N};
         auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
+        std::fill(m_device,m_device+(size*size),0.0);
 
         auto a_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_device,a_device+(size*size),1);
+        std::fill(a_device,a_device+(size*size),1.0);
+        
+        Q.wait();
 
         time1.start_timer();
 
@@ -502,11 +508,11 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
         free(a_device,Q);
     }
 
-    auto minmax = std::minmax_element(timings, timings+iter);
+    minmax = std::minmax_element(timings, timings+iter);
 
     double bandwidth = 1.0E-6 * 2 * size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
+    average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     if (print)
     {
@@ -533,9 +539,12 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
         sycl::range<1> local{N_b};
 
         auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
+        std::fill(m_device,m_device+(size*size),0.0);
 
         auto a_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
         std::fill(a_device,a_device+(size*size),1);
+
+        Q.wait();
 
         time1.start_timer();
 

@@ -75,7 +75,6 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
         sycl::buffer<TYPE , 1> m_buff(size*size);
         sycl::buffer<TYPE , 1> a_buff(size*size);
 
-
         time.start_timer();
 
         Q.submit([&](sycl::handler& cgh){

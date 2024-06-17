@@ -127,6 +127,21 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
 
 }
 
+void kernel(sycl::queue &Q, TYPE *m_host, TYPE *a_host, sycl::range<1> global)
+{
+    Q.submit([&](sycl::handler& cgh){
+
+        cgh.parallel_for<class host_memory>(sycl::range<1>(global), [=](sycl::item<1> it){
+
+            const int k = it.get_id(0);
+
+            m_host[k] = a_host[k];
+
+        });
+    });
+    Q.wait();
+
+}
 
 void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int iter)
 {
@@ -189,7 +204,7 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
         std::fill(m_host,m_host+(size*size),0.0);
 
         time1.start_timer();
-
+/*
         Q.submit([&](sycl::handler& cgh){
 
             cgh.parallel_for<class host_memory>(sycl::range<1>(global), [=](sycl::item<1> it){
@@ -201,7 +216,8 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
             });
         });
         Q.wait();
-
+*/
+        kernel(Q, m_host, a_host, global);
         time1.end_timer();
         timings[i] = time1.duration();
         

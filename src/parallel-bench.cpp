@@ -75,6 +75,22 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
         sycl::buffer<TYPE , 1> m_buff(size*size);
         sycl::buffer<TYPE , 1> a_buff(size*size);
 
+        Q.submit([&](sycl::handler& cgh){
+
+            auto m_acc = m_buff.get_access<sycl::access::mode::write>(cgh);
+            auto a_acc = a_buff.get_access<sycl::access::mode::write>(cgh);
+
+            cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
+
+                const int k = it.get_id(0);
+
+                m_acc[k] = 0.0 ;
+                a_acc[k] = 1.0;
+            
+            });
+
+        });
+
         time.start_timer();
 
         Q.submit([&](sycl::handler& cgh){

@@ -72,13 +72,16 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
         //sycl::buffer<TYPE , 1> m_buff((TYPE*)m,size*size);
         //sycl::buffer<TYPE , 1> a_buff((TYPE*)a,size*size);
 
-        sycl::buffer<TYPE , 1> m_buff(size*size);
-        sycl::buffer<TYPE , 1> a_buff(size*size);
+        sycl::buffer<TYPE , 1> m_buff(global);
+        sycl::buffer<TYPE , 1> a_buff(global);
 
         Q.submit([&](sycl::handler& cgh){
 
-            auto m_acc = m_buff.get_access<sycl::access::mode::write>(cgh);
-            auto a_acc = a_buff.get_access<sycl::access::mode::write>(cgh);
+            sycl::accessor m_acc(m_buff, cgh, sycl::write_only, sycl::no_init);
+            sycl::accessor a_acc(a_buff, cgh, sycl::write_only, sycl::no_init);
+
+            //auto m_acc = m_buff.get_access<sycl::access::mode::discard_write>(cgh);
+            //auto a_acc = a_buff.get_access<sycl::access::mode::discard_write>(cgh);
 
             cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 

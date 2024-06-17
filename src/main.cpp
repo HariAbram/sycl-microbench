@@ -241,8 +241,8 @@ int main(int argc, char* argv[]) {
       for (size_t i = 0; i < iter; i++)
       {
 
-          TYPE* m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
-          TYPE* a = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
+          TYPE* m = (TYPE *)std::aligned_alloc(2*1024*1024,sizeof(TYPE)*n_row*n_row);
+          TYPE* a = (TYPE *)std::aligned_alloc(2*1024*1024,sizeof(TYPE)*n_row*n_row);
 
 
           std::fill(a,a+(n_row*n_row),1);

@@ -90,6 +90,7 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
             });
 
         });
+        Q.wait();
 
         time.start_timer();
 

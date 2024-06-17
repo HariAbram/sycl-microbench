@@ -421,8 +421,8 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
         
     }
 
-    free(m_shared,Q);
-    free(a_shared,Q);
+    sycl::free(m_shared,Q);
+    sycl::free(a_shared,Q);
 
     minmax = std::minmax_element(timings_nd, timings_nd+iter);
 
@@ -576,8 +576,8 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
         timings_nd[i] = time1.duration();    
     }
 
-    free(m_device,Q);
-    free(a_device,Q);
+    sycl::free(m_device,Q);
+    sycl::free(a_device,Q);
 
     minmax = std::minmax_element(timings_nd, timings_nd+iter);
 

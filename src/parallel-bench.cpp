@@ -333,7 +333,7 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     {
         sycl::range<1> global{N*N};
         auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
-        std::fill(m_share,m_shared+(size*size),0.0);
+        std::fill(m_shared,m_shared+(size*size),0.0);
 
         auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
         std::fill(a_shared,a_shared+(size*size),1.0);
@@ -389,7 +389,7 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
         sycl::range<1> local{N_b};
 
         auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
-        std::fill(m_share,m_shared+(size*size),0.0);
+        std::fill(m_shared,m_shared+(size*size),0.0);
 
         auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
         std::fill(a_shared,a_shared+(size*size),1.0);

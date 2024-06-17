@@ -178,7 +178,6 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
     auto m_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
     auto a_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
 
-    std::fill(m_host,m_host+(size*size),0.0);
     std::fill(a_host,a_host+(size*size),1.0);
 
     Q.wait();
@@ -186,7 +185,9 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
     sycl::range<1> global{N*N};
 
     for (size_t i = 0; i < iter; i++)
-    {    
+    {   
+        std::fill(m_host,m_host+(size*size),0.0);
+
         time1.start_timer();
 
         Q.submit([&](sycl::handler& cgh){
@@ -335,13 +336,15 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     sycl::range<1> global{N*N};
     auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
-    std::fill(m_shared,m_shared+(size*size),0.0);
+    
 
     auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
     std::fill(a_shared,a_shared+(size*size),1.0);
 
     for (size_t i = 0; i < iter; i++)
     {
+        std::fill(m_shared,m_shared+(size*size),0.0);
+
         Q.wait();
 
         time1.start_timer();
@@ -488,7 +491,6 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     sycl::range<1> global{N*N};
     auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
-    std::fill(m_device,m_device+(size*size),0.0);
 
     auto a_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
     std::fill(a_device,a_device+(size*size),1.0);
@@ -497,6 +499,7 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     for (size_t i = 0; i < iter; i++)
     {
+        std::fill(m_device,m_device+(size*size),0.0);
 
         time1.start_timer();
 
@@ -556,7 +559,7 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     for (size_t i = 0; i < iter; i++)
     {
         std::fill(m_device,m_device+(size*size),0.0);
-        
+
         time1.start_timer();
 
         Q.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){

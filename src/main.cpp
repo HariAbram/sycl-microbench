@@ -275,8 +275,6 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << average*1E-9
           << std::endl;
 
-
-
     }
 
     else if (reduction)

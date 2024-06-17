@@ -40,7 +40,7 @@ CFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DREDUCTION_IN_SYCL -DT
 ifeq ($(VENDOR), acpp)
 CFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated
 else
-CFLAGS += -fsycl -DDPCPP
+CFLAGS += -fsycl -DDPCPP -qopenmp
 endif
 
 # Linker Flags

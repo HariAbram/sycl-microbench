@@ -70,9 +70,6 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
             sycl::accessor m_acc(m_buff, cgh, sycl::write_only, sycl::no_init);
             sycl::accessor a_acc(a_buff, cgh, sycl::write_only, sycl::no_init);
 
-            //auto m_acc = m_buff.get_access<sycl::access::mode::discard_write>(cgh);
-            //auto a_acc = a_buff.get_access<sycl::access::mode::discard_write>(cgh);
-
             cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 
                 const int k = it.get_id(0);
@@ -191,13 +188,10 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
         sycl::range<1> global{N*N};
         time1.start_timer();
 
-        Q.parallel_for<class host_memory>(sycl::range<1>(global), [=](sycl::item<1>it){
-
-            const int k = it.get_id(0);
+        Q.parallel_for<class host_memory>(sycl::range<1>(global), [=](sycl::id<1> k){
 
             m_host[k] = a_host[k];
 
-        
         });
         Q.wait();
 
@@ -232,7 +226,7 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
         std::fill(m_host,m_host+(size*size),0.0);
 
         auto a_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
-        std::fill(a_host,a_host+(size*size),1);
+        std::fill(a_host,a_host+(size*size),1.0);
 
         Q.wait();
 

@@ -244,20 +244,15 @@ int main(int argc, char* argv[]) {
 
       for (size_t i = 0; i < iter; i++)
       {
+        std::fill(m,m+(n_row*n_row),0.0);
+        std::fill(a,a+(n_row*n_row),1.0);
 
-          std::fill(m,m+(n_row*n_row),0.0);
-          std::fill(a,a+(n_row*n_row),1.0);
+        time1.start_timer();
 
-          time1.start_timer();
-          
-          #pragma omp parallel for 
-          for (size_t j = 0; j < n_row*n_row; j++)
-          {
-            m[j] = a[j];
-          }
-          
-          time1.end_timer();
-          timings[i] = time1.duration();
+        kernel_copy( m,  a, n_row);
+        
+        time1.end_timer();
+        timings[i] = time1.duration();
           
       }
 

@@ -38,10 +38,6 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
 
     for (i = 0; i < iter; i++)
     {
-        
-
-        
-
         sycl::buffer<TYPE , 1> m_buff(global);
         sycl::buffer<TYPE , 1> a_buff(global);
 
@@ -87,52 +83,25 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
     
     auto N = static_cast<size_t>(size);
 
-    sycl::range<1> global{N};    
-
     auto timings = (double*)std::malloc(sizeof(double)*iter);
 
     if (dim == 1)
     {
         sycl::range<1> global{N*N};
-        const int DIM =1;
-
         sycl::buffer<TYPE , 1> sum_buff((TYPE*)sum,size*size);
 
         int i;
-
-        
 
         for ( i = 0; i < iter; i++)
         {
             time.start_timer();
 
-            Q.submit([&](sycl::handler& cgh){
-                auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-
-                cgh.parallel_for<>(sycl::range<DIM>(global), [=](sycl::item<DIM>it){
-                    
-                    auto k = it.get_id(0);
-
-                    for (size_t l = 0; l < 1024; l++)
-                    {
-                        sum_acc[k] += 1;
-                        
-                    }
-                    
-                
-                });
-
-            });
-            Q.wait();
+            kernel_parallel_1(Q, sum_buff, global);
 
             time.end_timer();
 
             timings[i] = time.duration();
         }
-
-        auto minmax = std::minmax_element(timings, timings+iter);
-
-        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
         auto sum_r = sum_buff.get_host_access();
 
@@ -146,23 +115,12 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
 
         if (print)
         {
-            std::cout
-                << std::left << std::setw(24) << "range_BA"
-                << std::left << std::setw(24) << 1
-                << std::left << std::setw(24) << *minmax.first*1E-9
-                << std::left << std::setw(24) << *minmax.second*1E-9
-                << std::left << std::setw(24) << average*1E-9
-                << std::endl
-                << std::fixed;
-        }
-        
-        
+            print_results(timings, iter, size, "range_BA", 1, 2);
+        }        
     }
     else if (dim == 2)
     {
         sycl::range<2> global{N,N};
-        const int DIM =2;
-
         sycl::buffer<TYPE , 1> sum_buff((TYPE*)sum,size*size);
 
         int i;
@@ -170,38 +128,13 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
         for ( i = 0; i < iter; i++)
         {
             time.start_timer();
-
-            Q.submit([&](sycl::handler& cgh){
-                auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-
-                cgh.parallel_for<>(sycl::range<DIM>(global), [=](sycl::item<DIM>it){
-
-                    auto k = it.get_id(0);
-                    auto k1 = it.get_id(1);
-
-                    for (size_t l = 0; l < 1024; l++)
-                    {
-                        sum_acc[k*N+k1] += 1;
-                        
-                    }
-                    
-                
-                });
-
-            });
-            Q.wait();
-
+            kernel_parallel_2(Q, sum_buff, global);
             time.end_timer();
 
             timings[i] = time.duration();
         }
-        
-        auto minmax = std::minmax_element(timings, timings+iter);
-
-        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
         auto sum_r = sum_buff.get_host_access();
-
 
         if (sum_r[1]!= 1024*iter)
         {
@@ -211,20 +144,10 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
                       <<std::endl;
         }
 
-
         if (print)
         {
-            std::cout
-                << std::left << std::setw(24) << "range_BA"
-                << std::left << std::setw(24) << 2
-                << std::left << std::setw(24) << *minmax.first*1E-9
-                << std::left << std::setw(24) << *minmax.second*1E-9
-                << std::left << std::setw(24) << average*1E-9
-                << std::endl
-                << std::fixed;
+            print_results(timings, iter, size, "range_BA", 2, 2);
         }
-        
-    
     } 
     else
     {
@@ -267,7 +190,6 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
     if (dim == 1)
     {
         sycl::range<1> global{N*N};
-        const int DIM =1;
         int i;
 
         auto N_b = static_cast<size_t>(block_size);
@@ -284,36 +206,13 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
         {
 
             time.start_timer();
-
-            Q.submit([&](sycl::handler& cgh){
-                auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-
-                cgh.parallel_for<>(sycl::nd_range<DIM>(global,local), [=](sycl::nd_item<DIM>it){
-                    
-                    auto k = it.get_global_id(0);
-
-                    for (size_t l = 0; l < 1024; l++)
-                    {
-                        sum_acc[k] += 1;
-                        
-                    }
-                
-                });
-
-            });
-            Q.wait();
-
+            kernel_parallel_1(Q, sum_buff, global, local);
             time.end_timer();
 
             timings[i] = time.duration();
         }
 
-        auto minmax = std::minmax_element(timings, timings+iter);
-
-        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
-
         auto sum_r = sum_buff.get_host_access();
-
 
         if (sum_r[1]!= 1024*iter)
         {
@@ -325,23 +224,12 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
         if (print)
         {
-            std::cout
-                << std::left << std::setw(24) << "ndrange_BA"
-                << std::left << std::setw(24) << 1
-                << std::left << std::setw(24) << *minmax.first*1E-9
-                << std::left << std::setw(24) << *minmax.second*1E-9
-                << std::left << std::setw(24) << average*1E-9
-                << std::endl
-                << std::fixed;
+            print_results(timings, iter, size, "ndrange_BA", 1, 2);
         }
-        
-        
-    
     }
     else if (dim == 2)
     {
         sycl::range<2> global{N,N};
-        const int DIM =2;
         int i;
 
         auto N_b = static_cast<size_t>(block_size);
@@ -357,38 +245,13 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
         for ( i = 0; i < iter; i++)
         {
             time.start_timer();
-
-            Q.submit([&](sycl::handler& cgh){
-                auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-
-                cgh.parallel_for<>(sycl::nd_range<DIM>(global,local), [=](sycl::nd_item<DIM>it){
-
-                    auto k = it.get_global_id(0);
-                    auto k1 = it.get_global_id(1);
-
-                    for (size_t l = 0; l < 1024; l++)
-                    {
-                        sum_acc[k*N+k1] += 1;
-                        
-                    }
-                    
-                
-                });
-
-            });
-            Q.wait();
-
+            kernel_parallel_2(Q, sum_buff,global, local);
             time.end_timer();
 
             timings[i] = time.duration();
         }
 
-        auto minmax = std::minmax_element(timings, timings+iter);
-
-        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
-
         auto sum_r = sum_buff.get_host_access();
-
 
         if (sum_r[1]!= 1024*iter)
         {
@@ -400,18 +263,8 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
         if (print)
         {
-            std::cout
-                << std::left << std::setw(24) << "ndrange_BA"
-                << std::left << std::setw(24) << 2
-                << std::left << std::setw(24) << *minmax.first*1E-9
-                << std::left << std::setw(24) << *minmax.second*1E-9
-                << std::left << std::setw(24) << average*1E-9
-                << std::endl
-                << std::fixed;
+            print_results(timings, iter, size, "ndrange_BA", 2, 2);
         }
-        
-        
-    
     }
     else
     {

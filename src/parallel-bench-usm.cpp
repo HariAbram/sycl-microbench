@@ -337,40 +337,17 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter)
     if (dim == 1)
     {
         sycl::range<1> global{N*N};
-        const int DIM = 1;
-
         int i;
-
-        
 
         for ( i = 0; i < iter; i++)
         {
             time.start_timer();
-
-            Q.parallel_for<>(sycl::range<DIM>(global), [=](sycl::item<DIM>it){
-
-                auto k = it.get_id(0);
-
-                for (size_t l = 0; l < 1024; l++)
-                {
-                    sum[k] += 1;
-
-                }
-
-            
-            });
-            Q.wait();
-
+            kernel_parallel_1(Q, sum, global);
             time.end_timer();
 
             timings[i] = time.duration();
             
         }
-        
-
-        auto minmax = std::minmax_element(timings, timings+iter);
-
-        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
         
         if (sum[1] != 1024*iter)
         {
@@ -382,57 +359,24 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter)
 
         if (print)
         {
-            std::cout
-                << std::left << std::setw(24) << "range_USM"
-                << std::left << std::setw(24) << 1
-                << std::left << std::setw(24) << *minmax.first*1E-9
-                << std::left << std::setw(24) << *minmax.second*1E-9
-                << std::left << std::setw(24) << average*1E-9
-                << std::endl
-                << std::fixed;
+            print_results(timings, iter, size, "range_USM", 1, 2);
         }
-        
-        
-
+        free((TYPE*)sum,Q);
 
     }
     else if (dim == 2)
     {
         sycl::range<2> global{N,N};
-        const int DIM = 2;
         int i;
-
-        
 
         for ( i = 0; i < iter; i++)
         {
             time.start_timer();
-
-            Q.parallel_for<>(sycl::range<DIM>(global), [=](sycl::item<DIM>it){
-                
-                auto k = it.get_id(0);
-                auto k1 = it.get_id(1);
-
-                for (size_t l = 0; l < 1024; l++)
-                {
-                    sum[k*N+k1] += 1;         
-                    
-                }
-                
-            
-            });
-            Q.wait();
-
+            kernel_parallel_2(Q, sum, global);
             time.end_timer();
 
             timings[i] = time.duration();
         }
-
-        
-        auto minmax = std::minmax_element(timings, timings+iter);
-
-        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
-
 
         if (sum[1] != 1024*iter)
         {
@@ -444,26 +388,18 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter)
 
         if (print)
         {
-            std::cout
-                << std::left << std::setw(24) << "range_USM"
-                << std::left << std::setw(24) << 2
-                << std::left << std::setw(24) << *minmax.first*1E-9
-                << std::left << std::setw(24) << *minmax.second*1E-9
-                << std::left << std::setw(24) << average*1E-9
-                << std::endl
-                << std::fixed;
+            print_results(timings, iter, size, "range_USM", 2, 2);
         }
-        
-        
-    
 
+        free((TYPE*)sum,Q);
     }
     else
     {
         std::cout << "ERROR: the dimension input should be 1 or 2 " << std::endl;
+        free((TYPE*)sum,Q);
     }
     
-    free((TYPE*)sum,Q);
+    
     
 }
 
@@ -497,7 +433,6 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
     if (dim == 1)
     {
         sycl::range<1> global{N*N};
-        const int DIM = 1;
         int i;
 
         auto N_b = static_cast<size_t>(block_size);
@@ -513,30 +448,11 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
         for ( i = 0; i < iter; i++)
         {
             time.start_timer();
-
-            Q.parallel_for<>(sycl::nd_range<DIM>(global,local), [=](sycl::nd_item<DIM>it){
-
-                auto k = it.get_global_id(0);
-
-                for (size_t l = 0; l < 1024; l++)
-                {
-                    sum[k] += 1;
-                    
-                }
-                
-            
-            });
-            Q.wait();
-
+            kernel_parallel_1(Q, sum, global, local);
             time.end_timer();
 
             timings[i] = time.duration();
         }
-
-        auto minmax = std::minmax_element(timings, timings+iter);
-
-        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
-
 
         if (sum[1] != 1024*iter)
         {
@@ -549,24 +465,13 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
 
         if (print)
         {
-            std::cout
-                << std::left << std::setw(24) << "ndrange_USM"
-                << std::left << std::setw(24) << 1
-                << std::left << std::setw(24) << *minmax.first*1E-9
-                << std::left << std::setw(24) << *minmax.second*1E-9
-                << std::left << std::setw(24) << average*1E-9
-                << std::endl
-                << std::fixed;
+            print_results(timings, iter, size, "ndrange_USM", 1, 2);
         }
-        
-        
-
-
+        free(sum,Q);   
     }
     else if (dim == 2)
     {
         sycl::range<2> global{N,N};
-        const int DIM = 2;
         int i;
 
         auto N_b = static_cast<size_t>(block_size);
@@ -582,30 +487,11 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
         for ( i = 0; i < iter; i++)
         {
             time.start_timer();
-
-            Q.parallel_for<>(sycl::nd_range<DIM>(global,local), [=](sycl::nd_item<DIM>it){
-
-                auto k = it.get_global_id(0);
-                auto k1 = it.get_global_id(1);
-
-                for (size_t l = 0; l < 1024; l++)
-                {
-                    sum[k*N+k1] += 1;
-                    
-                }
-                
-            
-            });
-            Q.wait();
-
+            kernel_parallel_2(Q, sum, global, local);
             time.end_timer();
 
             timings[i] = time.duration();
         }
-
-        auto minmax = std::minmax_element(timings, timings+iter);
-
-        double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
         if (sum[1] != 1024*iter)
         {
@@ -617,23 +503,16 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
 
         if (print)
         {
-            std::cout
-                << std::left << std::setw(24) << "ndrange_USM"
-                << std::left << std::setw(24) << 2
-                << std::left << std::setw(24) << *minmax.first*1E-9
-                << std::left << std::setw(24) << *minmax.second*1E-9
-                << std::left << std::setw(24) << average*1E-9
-                << std::endl
-                << std::fixed;
+            print_results(timings, iter, size, "ndrange_USM", 2, 2);
         }
-
+        free(sum,Q);   
     }
     else
     {
         std::cout << "ERROR: the dimension input should be 1 or 2 " << std::endl;
     }
     
-    free(sum,Q);    
+     
     
 } 
 
@@ -745,11 +624,10 @@ void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, in
             
             auto m_acc = m_buff.get_access<sycl::access::mode::read>(cgh);
 
-            auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-
 #if defined(DPCPP) 
             auto sum_red = sycl::reduction(sum_buff, cgh,sycl::plus<TYPE>());
 #else
+            auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
             auto sum_red = sycl::reduction(sum_acc, sycl::plus<TYPE>());
 #endif
 

@@ -36,6 +36,27 @@ void kernel_copy(sycl::queue &Q, TYPE *m, TYPE *a, sycl::range<1> global, sycl::
 
 void kernel_copy(sycl::queue &Q, sycl::buffer<TYPE, 1> m_buff, sycl::buffer<TYPE, 1> a_buff, sycl::range<1> global);
 
-/// 
+void kernel_copy(TYPE* m, TYPE* a, int size);
+
+/// parallel
+
+void kernel_parallel_1(sycl::queue &Q, TYPE* sum, sycl::range<1> global);
+
+void kernel_parallel_1(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local);
+
+void kernel_parallel_1(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::range<1> global);
+
+void kernel_parallel_1(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::range<1> global, sycl::range<1> local);
+
+
+void kernel_parallel_2(sycl::queue &Q, TYPE* sum, sycl::range<2> global);
+
+void kernel_parallel_2(sycl::queue &Q, TYPE* sum, sycl::range<2> global, sycl::range<2> local);
+
+void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::range<2> global);
+
+void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::range<2> global, sycl::range<2> local);
+
+
 
 #endif

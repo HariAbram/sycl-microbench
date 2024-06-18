@@ -326,7 +326,7 @@ void mat_mul_range_buff_acc(sycl::queue &Q, int size)
     
     time.end_timer();
 
-    auto m3_r = m3_buff.get_access<sycl::access::mode::read>();
+    auto m3_r = m3_buff.get_host_access();
 
     if (m3_r[0] != size)
     {
@@ -483,7 +483,7 @@ void mat_mul_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
     
     time.end_timer();
 
-    auto m3_r = m3_buff.get_access<sycl::access::mode::read>();
+    auto m3_r = m3_buff.get_host_access();
 
     if (m3_r[0] != size)
     {

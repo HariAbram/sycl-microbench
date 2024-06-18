@@ -36,7 +36,7 @@ void init_arrays(sycl::queue &Q, TYPE *m, TYPE *a, sycl::range<1> global)
 
 }
 
-void init_arrays(sycl::queue &Q, sycl::_V1::buffer<TYPE, 1>  m_buff, sycl::_V1::buffer<TYPE, 1> a_buff, sycl::range<1> global)
+void init_arrays(sycl::queue &Q, sycl::buffer<TYPE, 1>  m_buff, sycl::buffer<TYPE, 1> a_buff, sycl::range<1> global)
 {
     Q.submit([&](sycl::handler& cgh){
 
@@ -91,7 +91,7 @@ void kernel_copy(sycl::queue &Q, TYPE *m, TYPE *a, sycl::range<1> global, sycl::
 
 }
 
-void kernel_copy(sycl::queue &Q, sycl::_V1::buffer<TYPE, 1> m_buff, sycl::_V1::buffer<TYPE, 1> a_buff, sycl::range<1> global)
+void kernel_copy(sycl::queue &Q, sycl::buffer<TYPE, 1> m_buff, sycl::buffer<TYPE, 1> a_buff, sycl::range<1> global)
 {
     Q.submit([&](sycl::handler& cgh){
 

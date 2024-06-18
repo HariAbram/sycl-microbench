@@ -134,7 +134,7 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
 
         double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-        auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
+        auto sum_r = sum_buff.get_host_access();
 
         if (sum_r[1]!= 1024*iter)
         {
@@ -200,7 +200,7 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
 
         double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-        auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
+        auto sum_r = sum_buff.get_host_access();
 
 
         if (sum_r[1]!= 1024*iter)
@@ -312,7 +312,7 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
         double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-        auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
+        auto sum_r = sum_buff.get_host_access();
 
 
         if (sum_r[1]!= 1024*iter)
@@ -387,7 +387,7 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
         double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-        auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
+        auto sum_r = sum_buff.get_host_access();
 
 
         if (sum_r[1]!= 1024*iter)
@@ -480,7 +480,7 @@ void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print, int it
 
     double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
     
-    auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
+    auto sum_r = sum_buff.get_host_access();
 
 
     if (sum_r[0]!= size*iter)
@@ -537,13 +537,12 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
 
         Q.submit([&](sycl::handler& cgh){
             
-            auto m_acc = m_buff.get_access<sycl::access::mode::read>(cgh);
-
-            auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
+            auto m_acc = m_buff.get_access<sycl::access::mode::read>(cgh);    
 
 #if defined(DPCPP) 
             auto sum_red = sycl::reduction(sum_buff, cgh,sycl::plus<TYPE>());
 #else
+            auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
             auto sum_red = sycl::reduction(sum_acc, sycl::plus<TYPE>());
 #endif
 
@@ -646,7 +645,7 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
 
     double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-    auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
+    auto sum_r = sum_buff.get_host_access();
 
     if (sum_r[0]!= 1024*iter)
     {
@@ -733,7 +732,7 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool 
 
     double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
-    auto sum_r = sum_buff.get_access<sycl::access::mode::read>();
+    auto sum_r = sum_buff.get_host_access();
 
     if (sum_r[0]!= 1024*iter)
     {

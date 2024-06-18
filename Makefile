@@ -46,7 +46,9 @@ CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DREDUCTION_IN_SYCL -
 
 ifeq ($(VENDOR), acpp)
 CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated
-else
+else ifeq ($(VENDOR), intel-llvm)
+CXXFLAGS += -fsycl -DDPCPP -fopenmp
+else 
 CXXFLAGS += -fsycl -DDPCPP -qopenmp
 endif
 

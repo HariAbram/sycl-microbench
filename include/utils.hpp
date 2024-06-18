@@ -1,22 +1,25 @@
-
-
 #ifndef UTILS_H
 #define UTILS_H
 
-#define BLOCK_SIZE 16
-#define SEED 18945678
+#include <iostream>
+#include <math.h>
+#include <vector>
+#include <CL/sycl.hpp>
+#include <getopt.h>
+#include <assert.h>
+#include <sys/time.h>
+#include <chrono>
+#include <algorithm>
+#include <string>
+#include <iomanip>
 
-typedef enum _FUNC_RETURN_CODE {
-    RET_SUCCESS,
-    RET_FAILURE
-}func_ret_t;
+#ifndef TYPE
+#define TYPE double
+#endif
 
-func_ret_t create_matrix_from_file(float **mp, const char* filename, int *size_p);
-func_ret_t create_matrix(float *__restrict__ *mp, int size);
-func_ret_t create_vector(float **vp, int size);
-func_ret_t create_sparse_matrix(float **mp, int size);
-func_ret_t create_sparse_matrix_from_file(int **rp, int **cp, float **vp, const char* filename, int *nnz, int *size_p);
+void print_results(double *timings, int iter, int size, std::string benchmark, int dim, int bench);
 
+double delay_time();
 
 
 

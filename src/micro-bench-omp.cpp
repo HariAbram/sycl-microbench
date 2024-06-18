@@ -8,8 +8,8 @@
 #include <omp.h>
 #include <algorithm>
 
-#include "timer.hpp"
-#include "micro-bench-omp.hpp"
+#include "../include/timer.hpp"
+#include "../include/micro-bench-omp.hpp"
 
 #ifndef TYPE
 #define TYPE double

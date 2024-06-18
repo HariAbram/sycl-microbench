@@ -1,3 +1,6 @@
+#ifndef TIMER_HPP
+#define TIMER_HPP
+
 #include <iostream>
 #include <math.h>
 #include <numeric>
@@ -23,3 +26,6 @@ public:
     double duration();
     double duration(bool temp);
 };
+
+
+#endif

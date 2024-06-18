@@ -14,10 +14,11 @@
 #define TYPE double
 #endif
 
-#include "timer.hpp"
-#include "parallel-bench.hpp"
-#include "vectorization-bench.hpp"
-#include "micro-bench-omp.hpp"
+#include "../include/timer.hpp"
+#include "../include/parallel-bench.hpp"
+#include "../include/kernels.hpp"
+#include "../include/vectorization-bench.hpp"
+#include "../include/micro-bench-omp.hpp"
 
 using namespace cl;
 
@@ -283,6 +284,7 @@ int main(int argc, char* argv[]) {
     {
       std::cout
           << std::left << std::setw(24) << "Function"
+          << std::left << std::setw(24) << "Dimension"
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
           << std::left << std::setw(24) << "Average"
@@ -392,6 +394,7 @@ int main(int argc, char* argv[]) {
       
       std::cout
           << std::left << std::setw(24) << "Function"
+          << std::left << std::setw(24) << "Dimension"
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
           << std::left << std::setw(24) << "Average"

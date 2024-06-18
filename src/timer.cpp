@@ -8,7 +8,7 @@
 #include <chrono>
 #include <iomanip>
 
-#include "timer.hpp"
+#include "../include/timer.hpp"
 
 timer::timer()
 {

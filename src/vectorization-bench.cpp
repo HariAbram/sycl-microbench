@@ -13,7 +13,7 @@
 #define TYPE double
 #endif
 
-#include "timer.hpp"
+#include "../include/timer.hpp"
 
 using namespace cl;
 using shared_allocator = sycl::usm_allocator<TYPE, sycl::usm::alloc::shared>;

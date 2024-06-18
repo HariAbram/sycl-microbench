@@ -1,223 +1,120 @@
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <math.h>
-#include <cstdlib>
-#include <random>
-#include <fstream>
-#include <algorithm> 
+#ifndef COMMON_HPP
+#define COMMON_HPP
+
 #include <iostream>
+#include <math.h>
+#include <vector>
+#include <CL/sycl.hpp>
+#include <getopt.h>
+#include <assert.h>
+#include <sys/time.h>
+#include <chrono>
+#include <algorithm>
+#include <string>
+#include <iomanip>
 
-#include "utils.hpp"
+#ifndef TYPE
+#define TYPE double
+#endif
 
-//create matrix from file 
-func_ret_t create_matrix_from_file(float **mp, const char* filename, int *size_p){
-  int i, j, size;
-  float *m;
-  FILE *fp = NULL;
+#include "../include/timer.hpp"
 
-  fp = fopen(filename, "rb");
-  if ( fp == NULL) {
-    return RET_FAILURE;
-  }
+void print_results(double *timings, int iter, int size, std::string benchmark, int dim, int bench)
+{
+  /*
+  bench = 1 - memory alloc
+          2 - parallel
+          3 - atomics  
+          4 - barriers
+  */
 
-  fscanf(fp, "%d\n", &size);
+  auto minmax = std::minmax_element(timings, timings+iter);
 
-  m = (float*) malloc(sizeof(float)*size*size);
-  if ( m == NULL) {
-    fclose(fp);
-    return RET_FAILURE;
-  }
+  double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
-  for (i=0; i < size; i++) {
-    for (j=0; j < size; j++) {
-      fscanf(fp, "%f ", m+i*size+j);
+  double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
+
+  if (bench == 1 )
+  {
+    if (benchmark == "Host memory alloc" || benchmark == "Shared memory alloc" || benchmark == "Device memory alloc")
+    {
+      std::cout
+      << std::left << std::setw(24) << benchmark
+      << std::left << std::setw(24) << " "
+      << std::left << std::setw(24) << *minmax.first*1E-9
+      << std::left << std::setw(24) << *minmax.second*1E-9
+      << std::left << std::setw(24) << average*1E-9
+      << std::endl;
     }
-  }
+    else
+    {
+      std::cout
+      << std::left << std::setw(24) << benchmark
+      << std::left << std::setw(24) << bandwidth
+      << std::left << std::setw(24) << *minmax.first*1E-9
+      << std::left << std::setw(24) << *minmax.second*1E-9
+      << std::left << std::setw(24) << average*1E-9
+      << std::endl;
 
-  fclose(fp);
-
-  *size_p = size;
-  *mp = m;
-
-  return RET_SUCCESS;
-}
-
-
-//create sparse matrix from file 
-func_ret_t create_sparse_matrix_from_file(int **rp, int **cp, float **vp, const char* filename, int *nnz, int *size_p){
-  int i, j, size;
-  int *r, *c ;
-  float *v;
-
-  std::ifstream fin(filename);
-
-  if ( fin.fail()) {
-    return RET_FAILURE;
-  }
-
-  fin >> i >> size >> *nnz;
-
-  j = *nnz;
-  r = (int*) malloc(sizeof(int)*j);
-  c = (int*) malloc(sizeof(int)*j);
-  v = (float*) malloc(sizeof(float)*j);
-
-  if ( r == NULL || c == NULL || v == NULL ) {
-    fin.close();
-    return RET_FAILURE;
-  }
-
-  for (i=1; i <= j; i++) {
-    fin >> c[i-1] >> r[i-1] >> v[i-1];
+    } 
     
   }
+  else if (bench == 2)
+  {
+    std::cout
+    << std::left << std::setw(24) << benchmark
+    << std::left << std::setw(24) << dim
+    << std::left << std::setw(24) << *minmax.first*1E-9
+    << std::left << std::setw(24) << *minmax.second*1E-9
+    << std::left << std::setw(24) << average*1E-9
+    << std::endl;
+  }
+  else if (bench == 3)
+  {
+    std::cout
+    << std::left << std::setw(24) << benchmark
+    << std::left << std::setw(24) << dim
+    << std::left << std::setw(24) << *minmax.first*1E-9
+    << std::left << std::setw(24) << *minmax.second*1E-9
+    << std::left << std::setw(24) << average*1E-9
+    << std::endl;
+  }
+  else if (bench == 4)
+  {
+    std::cout
+    << std::left << std::setw(24) << benchmark
+    << std::left << std::setw(24) << dim
+    << std::left << std::setw(24) << *minmax.first*1E-9
+    << std::left << std::setw(24) << *minmax.second*1E-9
+    << std::left << std::setw(24) << average*1E-9
+    << std::endl;
+  }  
 
-  fin.close();
-  
-
-  *size_p = size;
-  *rp = r;
-  *cp = c;
-  *vp = v;
-
-
-  return RET_SUCCESS;
 }
 
-// create dense random matrix
-
-func_ret_t create_matrix(float * __restrict__ * mp, int size){
-  float * m;
-  int i,j;
-  std::random_device dev;
-  std::mt19937 rng(dev());
-  std::uniform_real_distribution<float> dist_uniform(0,1);
-  
-  float lamda = -0.001;
-  float coe[2*size-1];
-  float coe_i =0.0;
-
-
-  for (i=0; i < size; i++)
-  {
-    coe_i = 10*exp(lamda*i); 
-    j=size-1+i;     
-    coe[j]=coe_i;
-    j=size-1-i;     
-    coe[j]=coe_i;
-  }
-
-  m = (float*) malloc(sizeof(float)*size*size);
-  if ( m == NULL) {
-    return RET_FAILURE;
-  }
-
-  for (i=0; i < size; i++) {
-    for (j=i; j < size; j++) {
-      m[i*size+j]=coe[size-1-i+j];
-//      dtype ran = dist_uniform(rng);
-//      m[i*size+j] = ran;
-//     m[j*size+i] = ran;
+double delay_time()
+{
+    timer time;
+    time.start_timer();
+    TYPE sum = 0;
+    for (size_t l = 0; l < 1024; l++)
+    {
+        sum += 1;
+        
+        if (sum < 0)
+        {
+            sum = 0;
+        }
+        
     }
-  }
+    time.end_timer();
+    auto kernel_offload_time = time.duration()/(1E+9);
 
-  *mp = m;
+    return kernel_offload_time;
 
-  return RET_SUCCESS;
-}
-
- 
-  
-
-// create dense vector 
-
-func_ret_t create_vector(float **vp, int size){
-  float *m;
-  int i,j;
-  std::random_device dev;
-  std::mt19937 rng(dev());
-  std::uniform_real_distribution<float> dist_uniform(0,1);
-
-  float lamda = -0.001;
-  float coe[2*size-1];
-  float coe_i =0.0;
-
-  for (i=0; i < size; i++)
-  {
-    coe_i = 10*exp(lamda*i); 
-    j=size-1+i;     
-    coe[j]=coe_i;
-    j=size-1-i;     
-    coe[j]=coe_i;
-  }
-  
-  m = (float*) malloc(sizeof(float)*size);
-  if ( m == NULL) {
-    return RET_FAILURE;
-  }
-
-  for (i=0; i < size; i++) {
-      m[i]=coe[size-1-i];
-//    float ran = dist_uniform(rng);
-//    m[i] = ran;
-
-  }
-
-  *vp = m;
-
-
-  return RET_SUCCESS;
-}
-
-//create sparse random matrix
-func_ret_t create_sparse_matrix(float **mp, int size){
-  float *m;
-  int i,j;
-  
-  float lamda = -0.001;
-  float coe[2*size-1];
-  float coe_i =0.0;
-
-
-  for (i=0; i < size; i++)
-  {
-    coe_i = 10*exp(lamda*i); 
-    j=size-1+i;     
-    coe[j]=coe_i;
-    j=size-1-i;     
-    coe[j]=coe_i;
-  }
-
-  m = (float*) malloc(sizeof(float)*size*size);
-  if ( m == NULL) {
-    return RET_FAILURE;
-  }
-  time_t t;
-
-  srand((unsigned) time(&t));
-
-  for (i=0; i < size; i++) {
-    for (j=i; j < size; j++) {
-      int a = 100;
-      if (rand()%a == 0)
-      {
-        m[i*size+j] = rand()%128;
-        m[j*size+i] = rand()%128;
-      }
-      else
-      {
-        m[i*size+j] = 0;
-        m[j*size+i] = 0;
-      }
-      
-    }
-  }
-
-  *mp = m;
-
-  return RET_SUCCESS;
 }
 
 
+
+
+#endif

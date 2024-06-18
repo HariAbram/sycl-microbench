@@ -4,11 +4,11 @@
 
 # Compiler can be set below, or via environment variable
 ifeq ($(VENDOR), acpp)
-CC        = acpp
+CXX        = acpp
 else ifeq ($(VENDOR), intel-llvm)
-CC        = clang++
+CXX       = clang++
 else 
-CC	  = icpx 
+CXX	  = icpx 
 endif
 
 OPTIMIZE  = yes
@@ -26,7 +26,14 @@ else
 program = bin/main-dpcpp
 endif
 
-source = src/main.cpp src/parallel-bench.cpp src/vectorization-bench.cpp src/timer.cpp src/micro-bench-omp.cpp
+source = src/main.cpp\
+         src/parallel-bench-usm.cpp\
+         src/parallel-bench-acc.cpp\
+         src/kernels.cpp\
+         src/utils.cpp\
+         src/vectorization-bench.cpp\
+         src/timer.cpp\
+         src/micro-bench-omp.cpp
 
 obj = $(source:.cpp=.o)
 
@@ -35,12 +42,12 @@ obj = $(source:.cpp=.o)
 #===============================================================================
 
 # Standard Flags
-CFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DREDUCTION_IN_SYCL -DTYPE=float
+CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DREDUCTION_IN_SYCL -DTYPE=float
 
 ifeq ($(VENDOR), acpp)
-CFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated
+CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated
 else
-CFLAGS += -fsycl -DDPCPP -qopenmp
+CXXFLAGS += -fsycl -DDPCPP -qopenmp
 endif
 
 # Linker Flags
@@ -49,27 +56,23 @@ LDFLAGS =
 
 # Debug Flags
 ifeq ($(DEBUG),yes)
-  CFLAGS  += -g 
+  CXXFLAGS  += -g 
   LDFLAGS += -g
 endif
 
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
-  CFLAGS += -Ofast
-endif
-
-ifeq ($(GPU),yes)
-  CFLAGS +=-DUSE_GPU
+  CXXFLAGS += -Ofast
 endif
 #===============================================================================
 # Targets to Build
 #===============================================================================
 
 $(program): $(obj)
-	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(obj) -o $@ $(LDFLAGS)
 
 %.o: %.cpp src/parallel-bench.hpp src/vectorization-bench.hpp src/timer.hpp 
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(obj)

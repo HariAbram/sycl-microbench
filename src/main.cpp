@@ -200,12 +200,12 @@ int main(int argc, char* argv[]) {
     else if (mem_alloc)
     {
       std::cout
-          << std::left << std::setw(24) << "Function"
+          << std::left << std::setw(24) << "Function" 
           << std::left << std::setw(24) << "MBytes/sec"
-          << std::left << std::setw(24) << "Min (sec)"
-          << std::left << std::setw(24) << "Max"
-          << std::left << std::setw(24) << "Median"
-          << std::left << std::setw(24) << "Average"
+          << std::left << std::setw(24) << "Min (sec)" 
+          << std::left << std::setw(24) << "Max" 
+          << std::left << std::setw(24) << "Median" 
+          << std::left << std::setw(24) << "Average" 
           << std::endl
           << std::fixed;
 

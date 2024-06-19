@@ -36,13 +36,13 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
     auto timings = (double*)std::malloc(sizeof(double)*iter);
     sycl::range<1> global{N*N};
 
+    sycl::buffer<TYPE , 1> m_buff(global);
+    sycl::buffer<TYPE , 1> a_buff(global);
+
+    init_arrays(Q, m_buff, a_buff, global);
+
     for (i = 0; i < iter; i++)
     {
-        sycl::buffer<TYPE , 1> m_buff(global);
-        sycl::buffer<TYPE , 1> a_buff(global);
-
-        init_arrays(Q, m_buff, a_buff, global);
-
         time.start_timer();
         kernel_copy(Q, m_buff, a_buff, global);
         time.end_timer();
@@ -288,7 +288,7 @@ void atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter)
     std::fill(m,m+size,1.0);
     auto sum = (TYPE *)std::malloc(1*sizeof(TYPE)); 
     sum[0] = 0.0;
-    
+
     auto N = static_cast<size_t>(size);
     sycl::range<1> global{N};
 

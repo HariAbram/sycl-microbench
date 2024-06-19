@@ -27,36 +27,39 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
           3 - atomics  
           4 - barriers
   */
-
+  std::sort(timings, timings+iter);
+  double median = timings[iter/2];
+  
   auto minmax = std::minmax_element(timings, timings+iter);
 
   double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
 
   double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
+
   if (bench == 1 )
   {
-    if (benchmark == "Host memory alloc" || benchmark == "Shared memory alloc" || benchmark == "Device memory alloc")
+    if (benchmark == "Host memory alloc(ms)" || benchmark == "Shared memory alloc(ms)" || benchmark == "Device memory alloc(ms)")
     {
       std::cout
       << std::left << std::setw(24) << benchmark
       << std::left << std::setw(24) << " "
-      << std::left << std::setw(24) << *minmax.first*1E-9
-      << std::left << std::setw(24) << *minmax.second*1E-9
-      << std::left << std::setw(24) << average*1E-9
-      << std::endl
-      << std::fixed;
+      << std::left << std::setw(24) << std::setprecision(6) << *minmax.first*1E-6
+      << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-6
+      << std::left << std::setw(24) << std::setprecision(6) << median*1E-6
+      << std::left << std::setw(24) << std::setprecision(6) << average*1E-6
+      << std::endl;
     }
     else
     {
       std::cout
       << std::left << std::setw(24) << benchmark
-      << std::left << std::setw(24) << bandwidth
-      << std::left << std::setw(24) << *minmax.first*1E-9
-      << std::left << std::setw(24) << *minmax.second*1E-9
-      << std::left << std::setw(24) << average*1E-9
-      << std::endl
-      << std::fixed;
+      << std::left << std::setw(24) << std::setprecision(3) << bandwidth
+      << std::left << std::setw(24) << std::setprecision(6) << *minmax.first*1E-9
+      << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-9
+      << std::left << std::setw(24) << std::setprecision(6) << median*1E-9
+      << std::left << std::setw(24) << std::setprecision(6) << average*1E-9
+      << std::endl;
 
     } 
     
@@ -66,9 +69,10 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
     std::cout
     << std::left << std::setw(24) << benchmark
     << std::left << std::setw(24) << dim
-    << std::left << std::setw(24) << *minmax.first*1E-9
-    << std::left << std::setw(24) << *minmax.second*1E-9
-    << std::left << std::setw(24) << average*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << *minmax.first*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << median*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << average*1E-9
     << std::endl
     << std::fixed;
   }
@@ -77,9 +81,10 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
     std::cout
     << std::left << std::setw(24) << benchmark
     << std::left << std::setw(24) << dim
-    << std::left << std::setw(24) << *minmax.first*1E-9
-    << std::left << std::setw(24) << *minmax.second*1E-9
-    << std::left << std::setw(24) << average*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << *minmax.first*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << median*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << average*1E-9
     << std::endl
     << std::fixed;
   }
@@ -88,9 +93,10 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
     std::cout
     << std::left << std::setw(24) << benchmark
     << std::left << std::setw(24) << dim
-    << std::left << std::setw(24) << *minmax.first*1E-9
-    << std::left << std::setw(24) << *minmax.second*1E-9
-    << std::left << std::setw(24) << average*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << *minmax.first*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << median*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << average*1E-9
     << std::endl
     << std::fixed;
   }  

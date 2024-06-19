@@ -78,6 +78,17 @@ void kernel_reduction(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::buff
 
 void kernel_reduction(int size, TYPE &sum, TYPE* m);
 
+/// barriers
+
+void kernel_global_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local);
+
+void kernel_global_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local);
+
+void kernel_local_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local);
+
+void kernel_local_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local);
+
+void kernel_barrier_omp(int size, TYPE* sum);
 
 
 #endif

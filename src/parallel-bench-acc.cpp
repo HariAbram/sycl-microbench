@@ -287,7 +287,8 @@ void atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter)
     auto m = (TYPE *)std::malloc(size*sizeof(TYPE)); 
     std::fill(m,m+size,1.0);
     auto sum = (TYPE *)std::malloc(1*sizeof(TYPE)); 
-
+    sum[0] = 0.0;
+    
     auto N = static_cast<size_t>(size);
     sycl::range<1> global{N};
 
@@ -335,6 +336,7 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
     auto m_shared = (TYPE *)std::malloc(size*sizeof(TYPE));
     std::fill(m_shared,m_shared+size,1.0);
     auto sum = sycl::malloc_shared<TYPE>(1*sizeof(TYPE),Q); Q.wait();
+    sum[0] = 0.0;
 
     auto N = static_cast<size_t>(size);
     auto N_b = static_cast<size_t>(block_size);
@@ -403,28 +405,7 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
     for ( i = 0; i < iter; i++)
     {
         time.start_timer();
-
-        Q.submit([&](sycl::handler& cgh){
-            auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-
-            cgh.parallel_for<class global_barrier_ba>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
-
-                auto k = it.get_global_id(0);
-
-                for (size_t l = 0; l < 1024; l++)
-                {
-                    sum_acc[k]+= 1;
-                }
-
-                
-                it.barrier();
-            
-            });
-
-        });
-        
-        Q.wait();
-
+        kernel_global_barrier(Q, sum_buff, global, local);
         time.end_timer();
 
         timings[i] = time.duration();
@@ -444,11 +425,8 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
     {
         print_results(timings, iter, size, "G barrier BA", 1, 4);
     }
-    
 
     free(sum);
-    
-    
 }
 
 void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
@@ -481,27 +459,7 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool 
     for ( i = 0; i < iter; i++)
     {
         time.start_timer();
-
-        Q.submit([&](sycl::handler& cgh){
-            auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-
-            cgh.parallel_for<class local_barrier_ba>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
-
-                auto k = it.get_global_id(0);
-
-                for (size_t l = 0; l < 1024; l++)
-                {
-                    sum_acc[k]+= 1;
-                }
-
-                it.barrier(sycl::access::fence_space::local_space);
-            
-            });
-
-        });
-        
-        Q.wait();
-
+        kernel_local_barrier(Q, sum_buff,global, local);
         time.end_timer();
 
         timings[i] = time.duration();
@@ -519,10 +477,8 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool 
 
     if (print)
     {
-        print_results(timings, iter, size, "G barrier BA", 1, 4);
+        print_results(timings, iter, size, "L barrier BA", 1, 4);
     }
     
     free(sum);
-
-    
 }

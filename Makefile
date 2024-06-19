@@ -42,14 +42,14 @@ obj = $(source:.cpp=.o)
 #===============================================================================
 
 # Standard Flags
-CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DREDUCTION_IN_SYCL -DTYPE=float
+CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=float
 
 ifeq ($(VENDOR), acpp)
-CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated
+CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated -DACPP
 else ifeq ($(VENDOR), intel-llvm)
-CXXFLAGS += -fsycl -DDPCPP -fopenmp
+CXXFLAGS += -fsycl -fopenmp
 else 
-CXXFLAGS += -fsycl -DDPCPP -qopenmp
+CXXFLAGS += -fsycl -qopenmp
 endif
 
 # Linker Flags

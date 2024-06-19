@@ -53,7 +53,7 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
     if (print)
     {
-        print_results(timings_alloc, iter, size, "Host memory alloc",1, 1);
+        print_results(timings_alloc, iter, size, "Host memory alloc(ms)",1, 1);
     }
    
     auto timings = (double*)std::malloc(sizeof(double)*iter);
@@ -146,7 +146,7 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     if (print)
     {
-        print_results(timings_alloc, iter, size, "Shared memory alloc",1, 1);
+        print_results(timings_alloc, iter, size, "Shared memory alloc(ms)",1, 1);
     }
     
 
@@ -239,7 +239,7 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     if (print)
     {
-        print_results(timings_alloc, iter, size, "Device memory alloc",1, 1);
+        print_results(timings_alloc, iter, size, "Device memory alloc(ms)",1, 1);
     }
 
     auto timings = (double*)std::malloc(sizeof(double)*iter);
@@ -526,8 +526,9 @@ void atomics_usm(sycl::queue &Q, int size, bool print, int iter)
     size = size*size;
 
     auto m_shared = sycl::malloc_shared<TYPE>(size*sizeof(TYPE),Q); Q.wait();
-    std::fill(m_shared,m_shared+size,1.0);
+    std::fill(m_shared,m_shared+size,1.0); Q.wait();
     auto sum = sycl::malloc_shared<TYPE>(1*sizeof(TYPE),Q); Q.wait();
+    sum[0] = 0.0;
 
     auto N = static_cast<size_t>(size);
     sycl::range<1> global{N};
@@ -560,6 +561,7 @@ void atomics_usm(sycl::queue &Q, int size, bool print, int iter)
     
     sycl::free(m_shared,Q);
     sycl::free(sum, Q);
+    free(timings);
 }
 
 
@@ -568,8 +570,9 @@ void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, in
     timer time;
 
     auto m_shared = (TYPE *)sycl::malloc_shared(size*size*sizeof(TYPE), Q);
-    std::fill(m_shared,m_shared+size*size,1.0);
+    std::fill(m_shared,m_shared+size*size,1.0); Q.wait();
     auto sum = sycl::malloc_shared<TYPE>(1*sizeof(TYPE),Q); Q.wait();
+    sum[0] = 0.0;
 
     auto N = static_cast<size_t>(size*size);
 
@@ -595,7 +598,8 @@ void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, in
         print_results(timings, iter, size, "Reduction USM", 1, 3);
     }   
     
-    free(m_shared);
+    sycl::free(m_shared,Q);
+    sycl::free(sum,Q);
 }
 
 
@@ -627,21 +631,7 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool prin
     for ( i = 0; i < iter; i++)
     {
         time.start_timer();
-
-        Q.parallel_for<class global_barrier_usm>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
-
-            auto k = it.get_global_id(0);
-
-            for (size_t l = 0; l < 1024; l++)
-            {
-                sum[k]+= 1;
-            }
-
-            it.barrier();
-        
-        });
-        Q.wait();
-
+        kernel_global_barrier(Q, sum, global, local);
         time.end_timer();
 
         timings[i] = time.duration();
@@ -659,12 +649,8 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool prin
     {
         print_results(timings, iter, size, "G barrier USM", 1, 4);
     }
-    
-    
 
     sycl::free(sum,Q);
-    
-    
 }
 
 
@@ -697,22 +683,7 @@ void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print
     {
 
         time.start_timer();
-
-        Q.parallel_for<class local_barrier_usm>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
-
-            auto k = it.get_global_id(0);
-
-            for (size_t l = 0; l < 1024; l++)
-            {
-                sum[k]+= 1;
-            }
-
-
-            it.barrier(sycl::access::fence_space::local_space);
-        
-        });
-        Q.wait();
-
+        kernel_local_barrier(Q, sum, global, local);
         time.end_timer();
 
         timings[i] = time.duration();
@@ -730,8 +701,6 @@ void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print
     {
         print_results(timings, iter, size, "L barrier USM", 1, 4);
     }
-    
-
     sycl::free(sum,Q);
 
 }

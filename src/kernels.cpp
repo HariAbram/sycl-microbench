@@ -8,7 +8,7 @@
 #include <chrono>
 #include <algorithm>
 #include <string>
-
+#include <omp.h>
 
 #ifndef TYPE
 #define TYPE double
@@ -325,7 +325,7 @@ void kernel_atomics(sycl::queue &Q, sycl::range<1> global, TYPE* m_shared, TYPE*
 
             auto j = it.get_id(0);
 
-            auto v = sycl::atomic_ref<TYPE, sycl::memory_order::relaxed,
+            auto v = sycl::atomic_ref<TYPE, sycl::memory_order::seq_cst,
                                     sycl::memory_scope::device,
                                     sycl::access::address_space::global_space>(
             sum[0]);
@@ -349,7 +349,7 @@ void kernel_atomics(sycl::queue &Q, sycl::range<1> global, sycl::buffer<TYPE, 1>
 
             auto j = it.get_id(0);
 
-            auto v = sycl::atomic_ref<TYPE, sycl::memory_order::relaxed,
+            auto v = sycl::atomic_ref<TYPE, sycl::memory_order::seq_cst,
                                 sycl::memory_scope::device,
                                 sycl::access::address_space::global_space>(
             sum_acc[0]);
@@ -437,3 +437,112 @@ void kernel_reduction(int size, TYPE &sum, TYPE* m)
 }
 
 /////////////////////////////////////////////// Barriers 
+
+
+void kernel_global_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local)
+{
+    Q.submit([&](sycl::handler& cgh){
+        cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
+
+            auto k = it.get_global_id(0);
+
+            auto e = it.get_local_id(0);
+
+            for (size_t l = 0; l < 1024+e; l++)
+            {
+                sum[k]+= 1;
+            }
+
+            it.barrier();
+
+        });
+    });
+    Q.wait();   
+}
+
+void kernel_global_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local)
+{
+    Q.submit([&](sycl::handler& cgh){
+        auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
+
+        cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
+
+            auto k = it.get_global_id(0);
+
+            auto e = it.get_local_id(0);
+
+            for (size_t l = 0; l < 1024+e; l++)
+            {
+                sum_acc[k]+= 1;
+            }
+
+            it.barrier();
+        });
+    });
+    Q.wait();
+}
+
+void kernel_local_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local)
+{
+    Q.submit([&](sycl::handler& cgh){
+        cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1> it){
+
+            auto k = it.get_global_id(0);
+
+            auto e = it.get_local_id(0);
+
+            for (size_t l = 0; l < 1024+e; l++)
+            {
+                sum[k]+= 1;
+            }
+
+            it.barrier(sycl::access::fence_space::local_space);
+
+        });
+    });
+    Q.wait();   
+}
+
+void kernel_local_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local)
+{
+    Q.submit([&](sycl::handler& cgh){
+        auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
+
+        cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1> it){
+
+            auto k = it.get_global_id(0);
+
+            auto e = it.get_local_id(0);
+
+            for (size_t l = 0; l < 1024+e; l++)
+            {
+                sum_acc[k]+= 1;
+            }
+
+            it.barrier(sycl::access::fence_space::local_space);
+        
+        });
+
+    });
+    Q.wait();
+}
+
+void kernel_barrier_omp(int size, TYPE* sum)
+{
+    #pragma omp parallel 
+    {
+        #pragma omp for
+        for (size_t j = 0; j < size*size; j++)        
+        {
+//            int tid = omp_get_thread_num();
+            
+            for (size_t l = 0; l < 1024; l++)
+            {
+                sum[j] += 1;
+            } 
+                    
+        };
+
+        #pragma omp barrier
+    }
+}

@@ -181,7 +181,7 @@ void reduction_omp(int size, bool print, int iter)
 
 }
 
-void barrier_test_omp(int size, bool print, int iter)
+void barrier_test_omp(int size, bool print, int iter )
 {
 
   timer time;
@@ -197,23 +197,7 @@ void barrier_test_omp(int size, bool print, int iter)
   for ( i = 0; i < iter; i++)
   {
     time.start_timer();
-
-    #pragma omp parallel 
-    {
-      #pragma omp for
-      for (size_t j = 0; j < size*size; j++)        
-      {
-          
-          for (size_t l = 0; l < 1024; l++)
-          {
-              sum[j] += 1;
-          } 
-                  
-      };
-
-      #pragma omp barrier
-    }
-
+    kernel_barrier_omp(size, sum);
     time.end_timer();
 
     timings[i] = time.duration();
@@ -233,18 +217,5 @@ void barrier_test_omp(int size, bool print, int iter)
   {
     print_results(timings, iter, size, "OMP barriers", 1, 4);
   }
-  
   free(sum);
-
-}
-
-void kernel_computation()
-{
-  int sum = 0;
-
-  for (size_t l = 0; l < 1024; l++)
-  {
-      sum += 1;
-      if(sum < 0) std::cout<<sum<<std::endl;
-  }
 }

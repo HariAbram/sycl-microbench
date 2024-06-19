@@ -19,6 +19,7 @@
 #include "../include/kernels.hpp"
 #include "../include/vectorization-bench.hpp"
 #include "../include/micro-bench-omp.hpp"
+#include "../include/utils.hpp"
 
 using namespace cl;
 
@@ -204,6 +205,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "MBytes/sec"
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Median"
           << std::left << std::setw(24) << "Average"
           << std::endl
           << std::fixed;
@@ -242,39 +244,23 @@ int main(int argc, char* argv[]) {
       TYPE* m = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*n_row*n_row);
       TYPE* a = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*n_row*n_row);
 
+      std::fill(m,m+(n_row*n_row),0.0);
+      std::fill(a,a+(n_row*n_row),1.0);
+
       for (size_t i = 0; i < iter; i++)
       {
-        std::fill(m,m+(n_row*n_row),0.0);
-        std::fill(a,a+(n_row*n_row),1.0);
-
         time1.start_timer();
-
         kernel_copy( m,  a, n_row);
-        
         time1.end_timer();
-        timings[i] = time1.duration();
-          
+
+        timings[i] = time1.duration();   
       }
 
       free(m);
       free(a);
-
-      auto minmax = std::minmax_element(timings, timings+iter);
-
-      double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter - 1);
-
-      double bandwidth = 1.0E-6 * 2 *n_row*n_row*sizeof(TYPE) / (*minmax.first*1E-9);
-
-      std::cout
-          << std::left << std::setw(24) << "std memory"
-          << std::left << std::setw(24) << bandwidth
-          << std::left << std::setw(24) << *minmax.first*1E-9
-          << std::left << std::setw(24) << *minmax.second*1E-9
-          << std::left << std::setw(24) << average*1E-9
-          << std::endl;
+      print_results(timings,iter,n_row, "std memory", 1, 1);
 
     }
-
     else if (reduction)
     {
       std::cout
@@ -282,6 +268,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "Dimension"
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Median"
           << std::left << std::setw(24) << "Average"
           << std::endl
           << std::fixed;
@@ -317,6 +304,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "Dimension"
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Median"
           << std::left << std::setw(24) << "Average"
           << std::endl
           << std::fixed;
@@ -357,6 +345,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "Dimension"
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Median"
           << std::left << std::setw(24) << "Average"
           << std::endl
           << std::fixed;
@@ -396,6 +385,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "Dimension"
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
+          << std::left << std::setw(24) << "Median"
           << std::left << std::setw(24) << "Average"
           << std::endl
           << std::fixed;

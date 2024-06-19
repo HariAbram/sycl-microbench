@@ -43,7 +43,7 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
         auto m_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
 
-        free(m_host,Q);
+        sycl::free(m_host,Q);
 
         time.end_timer();
 
@@ -138,7 +138,7 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     {
         time.start_timer();
         auto m_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
-        free(m_shared,Q);
+        sycl::free(m_shared,Q);
         time.end_timer();
 
         timings_alloc[i] = time.duration();
@@ -230,7 +230,7 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     {
         time.start_timer();
         auto m_device = sycl::malloc_device<TYPE>(size*size,Q); Q.wait();
-        free(m_device,Q);
+        sycl::free(m_device,Q);
         time.end_timer();
 
         timings_alloc[i] = time.duration();
@@ -361,7 +361,7 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter)
         {
             print_results(timings, iter, size, "range_USM", 1, 2);
         }
-        free((TYPE*)sum,Q);
+        sycl::free((TYPE*)sum,Q);
 
     }
     else if (dim == 2)
@@ -391,12 +391,12 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter)
             print_results(timings, iter, size, "range_USM", 2, 2);
         }
 
-        free((TYPE*)sum,Q);
+        sycl::free((TYPE*)sum,Q);
     }
     else
     {
         std::cout << "ERROR: the dimension input should be 1 or 2 " << std::endl;
-        free((TYPE*)sum,Q);
+        sycl::free((TYPE*)sum,Q);
     }
     
     
@@ -467,7 +467,7 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
         {
             print_results(timings, iter, size, "ndrange_USM", 1, 2);
         }
-        free(sum,Q);   
+        sycl::free(sum,Q);   
     }
     else if (dim == 2)
     {
@@ -505,7 +505,7 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
         {
             print_results(timings, iter, size, "ndrange_USM", 2, 2);
         }
-        free(sum,Q);   
+        sycl::free(sum,Q);   
     }
     else
     {
@@ -519,7 +519,7 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
 
 // reduction 
 
-void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print, int iter)
+void atomics_usm(sycl::queue &Q, int size, bool print, int iter)
 {
     timer time;
 
@@ -539,31 +539,11 @@ void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print, int iter)
     for ( i = 0; i < iter; i++)
     {
         time.start_timer();
-
-        Q.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
-
-            auto j = it.get_id(0);
-
-            auto v = sycl::atomic_ref<TYPE, sycl::memory_order::relaxed,
-                                  sycl::memory_scope::device,
-                                  sycl::access::address_space::global_space>(
-            sum[0]);
-
-            
-            v.fetch_add(m_shared[j]);
-            
-        });
-
-        Q.wait();
-
+        kernel_atomics(Q, global, m_shared, sum);
         time.end_timer();
 
         timings[i] = time.duration();
     }   
-
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     if (sum[0]!= size*iter)
     {
@@ -575,42 +555,25 @@ void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print, int iter)
 
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "atomics_USM"
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+        print_results(timings, iter, size, "atomics USM", 1, 3);
     }
     
-    
-    
-    
-    free(m_shared,Q);
+    sycl::free(m_shared,Q);
+    sycl::free(sum, Q);
 }
 
-
-////////////////////////////// change it to usm 
-#if defined(REDUCTION_IN_SYCL) 
 
 void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
     timer time;
 
-    auto m_shared = (TYPE *)std::malloc(size*sizeof(TYPE));
-    std::fill(m_shared,m_shared+size,1.0);
+    auto m_shared = (TYPE *)sycl::malloc_shared(size*size*sizeof(TYPE), Q);
+    std::fill(m_shared,m_shared+size*size,1.0);
     auto sum = sycl::malloc_shared<TYPE>(1*sizeof(TYPE),Q); Q.wait();
 
-    auto N = static_cast<size_t>(size);
-    auto N_b = static_cast<size_t>(block_size);
+    auto N = static_cast<size_t>(size*size);
 
     sycl::range<1> global{N};
-    sycl::range<1> local{N_b};
-
-    sycl::buffer<TYPE , 1> m_buff(m_shared,size);
-
-    sycl::buffer<TYPE , 1> sum_buff(sum,1);
         
     int i;
 
@@ -620,52 +583,20 @@ void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, in
     {
         time.start_timer();
 
-        Q.submit([&](sycl::handler& cgh){
-            
-            auto m_acc = m_buff.get_access<sycl::access::mode::read>(cgh);
-
-#if defined(DPCPP) 
-            auto sum_red = sycl::reduction(sum_buff, cgh,sycl::plus<TYPE>());
-#else
-            auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-            auto sum_red = sycl::reduction(sum_acc, sycl::plus<TYPE>());
-#endif
-
-            cgh.parallel_for<>(sycl::nd_range<1>(global,local), sum_red ,[=](sycl::nd_item<1>it, auto &sum){
-
-                auto j = it.get_global_id(0);
-
-                sum += m_acc[j];
-                
-            });
-        });
-
-        Q.wait();
+        kernel_reduction(Q, sum, m_shared, global);
 
         time.end_timer();
 
         timings[i] = time.duration();
     }   
 
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
-
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "Reduction"
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+        print_results(timings, iter, size, "Reduction USM", 1, 3);
     }   
     
     free(m_shared);
 }
-
-#endif
 
 
 void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter)
@@ -716,10 +647,6 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool prin
         timings[i] = time.duration();
     }
 
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
-
     if (sum[0]!= 1024*iter)
     {
         std::cout << "Verification failed "
@@ -730,18 +657,12 @@ void global_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool prin
 
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "G barrier USM"
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+        print_results(timings, iter, size, "G barrier USM", 1, 4);
     }
     
     
 
-    free(sum,Q);
+    sycl::free(sum,Q);
     
     
 }
@@ -796,10 +717,6 @@ void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print
 
         timings[i] = time.duration();
     }
-    
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     if (sum[0]!= 1024*iter)
     {
@@ -811,16 +728,10 @@ void local_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print
 
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "L barrier USM"
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+        print_results(timings, iter, size, "L barrier USM", 1, 4);
     }
     
 
-    free(sum,Q);
+    sycl::free(sum,Q);
 
 }

@@ -286,25 +286,29 @@ int main(int argc, char* argv[]) {
           << std::endl
           << std::fixed;
 
-      reduction_with_atomics_usm(Q, n_row, false, 3);
+      atomics_usm(Q, n_row, false, 3);
 
-      reduction_with_atomics_usm(Q, n_row, true, iter);
+      atomics_usm(Q, n_row, true, iter);
 
-      reduction_with_atomics_buf_acc(Q, n_row, false, 3);
+      atomics_buf_acc(Q, n_row, false, 3);
 
-      reduction_with_atomics_buf_acc(Q, n_row, true, iter);
+      atomics_buf_acc(Q, n_row, true, iter);
 
-      atomic_reduction_omp(n_row, false, 3);
+      atomics_omp(n_row, false, 3);
 
-      atomic_reduction_omp(n_row, true, iter);
+      atomics_omp(n_row, true, iter);
+
+      reduction_with_usm(Q, n_row,  block_size, false, 3);
+
+      reduction_with_usm(Q, n_row,  block_size, true, iter);
 
       reduction_with_buf_acc(Q, n_row,  block_size, false, 3);
 
       reduction_with_buf_acc(Q, n_row,  block_size, true, iter);
 
-      reduction_without_atomics_omp(n_row, false, 3);
+      reduction_omp(n_row, false, 3);
 
-      reduction_without_atomics_omp(n_row, true, iter);
+      reduction_omp(n_row, true, iter);
     }
     else if (range)
     {

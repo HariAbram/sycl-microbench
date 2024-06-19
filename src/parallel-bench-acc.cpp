@@ -278,7 +278,7 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
 // reduction 
 
-void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter)
+void atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter)
 {
     timer time;
 
@@ -302,39 +302,13 @@ void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print, int it
     for ( i = 0; i < iter; i++)
     {
         time.start_timer();
-
-        Q.submit([&](sycl::handler& cgh){
-            auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-            auto m_acc = m_buff.get_access<sycl::access::mode::read>(cgh);
-
-            cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
-
-                auto j = it.get_id(0);
-
-                auto v = sycl::atomic_ref<TYPE, sycl::memory_order::relaxed,
-                                    sycl::memory_scope::device,
-                                    sycl::access::address_space::global_space>(
-                sum_acc[0]);
-
-                
-                v.fetch_add(m_acc[j]);
-                
-            });
-        });
-
-        Q.wait();
-
+        kernel_atomics(Q,  global,  m_buff, sum_buff);
         time.end_timer();
 
         timings[i] = time.duration();
     }   
-
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
     
     auto sum_r = sum_buff.get_host_access();
-
 
     if (sum_r[0]!= size*iter)
     {
@@ -346,21 +320,13 @@ void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print, int it
 
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "atomics_BA"
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+        print_results(timings, iter, size, "atomics BA", 1, 3);
     }
     
     
     free(m);
     free(sum);
 }
-
-#if defined(REDUCTION_IN_SYCL) 
 
 void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
@@ -388,25 +354,7 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
     {
         time.start_timer();
 
-        Q.submit([&](sycl::handler& cgh){
-            
-            auto m_acc = m_buff.get_access<sycl::access::mode::read>(cgh);    
-
-#if defined(DPCPP) 
-            auto sum_red = sycl::reduction(sum_buff, cgh,sycl::plus<TYPE>());
-#else
-            auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-            auto sum_red = sycl::reduction(sum_acc, sycl::plus<TYPE>());
-#endif
-
-            cgh.parallel_for<>(sycl::nd_range<1>(global,local), sum_red ,[=](sycl::nd_item<1>it, auto &sum){
-
-                auto j = it.get_global_id(0);
-
-                sum += m_acc[j];
-                
-            });
-        });
+        kernel_reduction(Q, sum_buff, m_buff, global);
 
         Q.wait();
 
@@ -415,25 +363,13 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
         timings[i] = time.duration();
     }   
 
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
-
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "Reduction"
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+        print_results(timings, iter, size, "Reduction BA", 1, 3);
     }   
     
     free(m_shared);
 }
-
-#endif
 
 
 void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
@@ -494,10 +430,6 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
         timings[i] = time.duration();
     }
 
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
-
     auto sum_r = sum_buff.get_host_access();
 
     if (sum_r[0]!= 1024*iter)
@@ -510,13 +442,7 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
 
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "G barrier BA"
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+        print_results(timings, iter, size, "G barrier BA", 1, 4);
     }
     
 
@@ -580,10 +506,6 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool 
 
         timings[i] = time.duration();
     }
-    
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     auto sum_r = sum_buff.get_host_access();
 
@@ -597,13 +519,7 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool 
 
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "L barrier BA"
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+        print_results(timings, iter, size, "G barrier BA", 1, 4);
     }
     
     free(sum);

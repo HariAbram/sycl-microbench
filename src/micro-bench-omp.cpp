@@ -10,6 +10,8 @@
 
 #include "../include/timer.hpp"
 #include "../include/micro-bench-omp.hpp"
+#include "../include/utils.hpp"
+#include "../include/kernels.hpp"
 
 #ifndef TYPE
 #define TYPE double
@@ -31,31 +33,11 @@ void parallel_for_omp(int size, bool print, int iter)
     for ( i = 0; i < iter; i++)
     {
       time.start_timer();
-
-      #pragma omp parallel 
-      {
-        #pragma omp for 
-        for (size_t j = 0; j < size*size; j++)        
-        {
-          
-          for (size_t l = 0; l < 1024; l++)
-          {
-              sum[j] += 1;
-              
-          }
-            
-        };
-
-      }
-
+      kernel_parallel_omp(size, sum);
       time.end_timer();
 
       timings[i] = time.duration();
     };
-       
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     if(sum[0] != 1024*iter) 
     {
@@ -64,18 +46,10 @@ void parallel_for_omp(int size, bool print, int iter)
                 << "Final value"<< sum[0]
                 <<std::endl;
     }
-    
 
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "OMP_parallel"
-            << std::left << std::setw(24) << 1
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+      print_results(timings, iter, size, "OMP_parallel", 1, 2);
     }
     
     free(sum);
@@ -100,22 +74,7 @@ void parallel_for_omp_nested(int size, bool print, int iter)
     for ( i = 0; i < iter; i++)
     {
       time.start_timer();
-
-      #pragma omp parallel  
-      {
-        #pragma omp for collapse(2)
-        for (size_t j = 0; j < size; j++)        
-        {
-          for (size_t k = 0; k < size; k++)
-          {
-              for (size_t l = 0; l < 1024; l++)
-              {
-                  sum[j*size+k] += 1;
-              }
-          }
-        };
-      }
-
+      kernel_parallel_omp_nested(size, sum);
       time.end_timer();
 
       timings[i] = time.duration();
@@ -123,10 +82,6 @@ void parallel_for_omp_nested(int size, bool print, int iter)
       if(sum[0] < 0)std::cout<<sum<<std::endl;
 
     };
-
-    auto minmax = std::minmax_element(timings, timings+iter);
-
-    double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
     if(sum[0] != 1024*iter)
     {
@@ -138,58 +93,35 @@ void parallel_for_omp_nested(int size, bool print, int iter)
 
     if (print)
     {
-        std::cout
-            << std::left << std::setw(24) << "OMP_parallel_nested"
-            << std::left << std::setw(24) << 1
-            << std::left << std::setw(24) << *minmax.first*1E-9
-            << std::left << std::setw(24) << *minmax.second*1E-9
-            << std::left << std::setw(24) << average*1E-9
-            << std::endl
-            << std::fixed;
+      print_results(timings, iter, size, "OMP_parallel_nested", 1, 2);
     }
     
     free(sum);
 
 }
 
-void atomic_reduction_omp( int size, bool print, int iter)
+void atomics_omp( int size, bool print, int iter)
 {
   timer time;
 
   TYPE * m = (TYPE * )malloc(sizeof(TYPE)*size*size); 
   std::fill(m , m+(size*size),1);
-  
 
   int i;
   TYPE sum = 0.0;
 
   auto timings = (double*)std::malloc(sizeof(double)*iter);
-
-  
-
   for ( i = 0; i < iter; i++)
   {
 
     time.start_timer();
-    
-    #pragma omp parallel for private(sum)
-    for (size_t j = 0; j < size*size; j++)        
-    {
-      #pragma omp atomic
-      sum+= m[j];
-
-    };
-
+    kernel_atomics(size, sum, m);
     time.end_timer();
 
     timings[i] = time.duration();
 
     if(sum < 0) std::cout<<sum<<std::endl;
   };
-
-  auto minmax = std::minmax_element(timings, timings+iter);
-
-  double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
   if (sum!= size*size*iter)
   {
@@ -201,19 +133,13 @@ void atomic_reduction_omp( int size, bool print, int iter)
 
   if (print)
   {
-      std::cout
-          << std::left << std::setw(24) << "OMP_atomics"
-          << std::left << std::setw(24) << *minmax.first*1E-9
-          << std::left << std::setw(24) << *minmax.second*1E-9
-          << std::left << std::setw(24) << average*1E-9
-          << std::endl
-          << std::fixed;
+    print_results(timings, iter, size, "OMP atomics", 1, 3);
   }
 
   free(m);
 }
 
-void reduction_without_atomics_omp(int size, bool print, int iter)
+void reduction_omp(int size, bool print, int iter)
 {
 
   timer time;
@@ -230,24 +156,13 @@ void reduction_without_atomics_omp(int size, bool print, int iter)
   {
 
     time.start_timer();
-
-    #pragma omp parallel for reduction(+:sum) 
-    for (size_t j = 0; j < size*size; j++)        
-    {
-      sum+= m[j];
-
-    };
-
+    kernel_reduction( size, sum, m);
     time.end_timer();
 
     timings[i] = time.duration();
 
     if(sum < 0) std::cout<<sum<<std::endl;
   };
-
-  auto minmax = std::minmax_element(timings, timings+iter);
-
-  double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
   if (sum!= size*size*iter)
   {
@@ -259,13 +174,7 @@ void reduction_without_atomics_omp(int size, bool print, int iter)
 
   if (print)
   {
-      std::cout
-          << std::left << std::setw(24) << "OMP_reduction"
-          << std::left << std::setw(24) << *minmax.first*1E-9
-          << std::left << std::setw(24) << *minmax.second*1E-9
-          << std::left << std::setw(24) << average*1E-9
-          << std::endl
-          << std::fixed;
+    print_results(timings, iter, size, "OMP Reduction", 1, 3);
   }
   
   free(m);
@@ -312,10 +221,6 @@ void barrier_test_omp(int size, bool print, int iter)
     if(sum[0] < 0) std::cout<<sum<<std::endl;
   };
 
-  auto minmax = std::minmax_element(timings, timings+iter);
-
-  double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
-
   if(sum[0] != 1024*iter)
   {
     std::cout << "Verification failed "
@@ -326,13 +231,7 @@ void barrier_test_omp(int size, bool print, int iter)
 
   if (print)
   {
-      std::cout
-          << std::left << std::setw(24) << "OMP_barriers"
-          << std::left << std::setw(24) << *minmax.first*1E-9
-          << std::left << std::setw(24) << *minmax.second*1E-9
-          << std::left << std::setw(24) << average*1E-9
-          << std::endl
-          << std::fixed;
+    print_results(timings, iter, size, "OMP barriers", 1, 4);
   }
   
   free(sum);

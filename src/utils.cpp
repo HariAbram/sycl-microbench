@@ -44,7 +44,8 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
       << std::left << std::setw(24) << *minmax.first*1E-9
       << std::left << std::setw(24) << *minmax.second*1E-9
       << std::left << std::setw(24) << average*1E-9
-      << std::endl;
+      << std::endl
+      << std::fixed;
     }
     else
     {
@@ -54,7 +55,8 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
       << std::left << std::setw(24) << *minmax.first*1E-9
       << std::left << std::setw(24) << *minmax.second*1E-9
       << std::left << std::setw(24) << average*1E-9
-      << std::endl;
+      << std::endl
+      << std::fixed;
 
     } 
     
@@ -67,7 +69,8 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
     << std::left << std::setw(24) << *minmax.first*1E-9
     << std::left << std::setw(24) << *minmax.second*1E-9
     << std::left << std::setw(24) << average*1E-9
-    << std::endl;
+    << std::endl
+    << std::fixed;
   }
   else if (bench == 3)
   {
@@ -77,7 +80,8 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
     << std::left << std::setw(24) << *minmax.first*1E-9
     << std::left << std::setw(24) << *minmax.second*1E-9
     << std::left << std::setw(24) << average*1E-9
-    << std::endl;
+    << std::endl
+    << std::fixed;
   }
   else if (bench == 4)
   {
@@ -87,7 +91,8 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
     << std::left << std::setw(24) << *minmax.first*1E-9
     << std::left << std::setw(24) << *minmax.second*1E-9
     << std::left << std::setw(24) << average*1E-9
-    << std::endl;
+    << std::endl
+    << std::fixed;
   }  
 
 }

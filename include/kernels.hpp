@@ -58,5 +58,26 @@ void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
 void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::range<2> global, sycl::range<2> local);
 
 
+void kernel_parallel_omp(int size, TYPE* sum);
+
+void kernel_parallel_omp_nested(int size, TYPE* sum);
+
+/// atomics
+
+void kernel_atomics(sycl::queue &Q, sycl::range<1> global, TYPE* m_shared, TYPE* sum);
+
+void kernel_atomics(sycl::queue &Q, sycl::range<1> global, sycl::buffer<TYPE, 1> m_buff, sycl::buffer<TYPE, 1> sum_buff);
+
+void kernel_atomics(int size, TYPE &sum, TYPE* m);
+
+/// reduction
+
+void kernel_reduction(sycl::queue &Q, TYPE* sum, TYPE* m_shared, sycl::range<1> global);
+
+void kernel_reduction(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::buffer<TYPE, 1> m_buff, sycl::range<1> global);
+
+void kernel_reduction(int size, TYPE &sum, TYPE* m);
+
+
 
 #endif

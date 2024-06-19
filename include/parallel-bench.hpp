@@ -33,11 +33,14 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
 //reduction
 
-void reduction_with_atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter);
+void atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter);
 
-void reduction_with_atomics_usm(sycl::queue &Q, int size, bool print, int iter);
+void atomics_usm(sycl::queue &Q, int size, bool print, int iter);
 
 void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print, int iter);
+
+void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, int iter);
+
 
 // barriers
 

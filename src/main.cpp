@@ -338,8 +338,6 @@ int main(int argc, char* argv[]) {
     else if (nd_range)
     {
 
-      std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
-
       std::cout
           << std::left << std::setw(24) << "Function"
           << std::left << std::setw(24) << "Dimension"
@@ -377,8 +375,6 @@ int main(int argc, char* argv[]) {
     
     else if (barrier)
     {
-
-      std::cout<< "\n Local range of the <nd_range> construct is: "<< block_size << std::endl;
       
       std::cout
           << std::left << std::setw(24) << "Function"

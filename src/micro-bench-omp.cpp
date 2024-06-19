@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <sys/time.h>
 #include <chrono>
-#include <omp.h>
 #include <algorithm>
 
 #include "../include/timer.hpp"

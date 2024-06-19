@@ -7,7 +7,6 @@
 #include <sys/time.h>
 #include <chrono>
 #include <sys/time.h>
-#include <omp.h>
 #include <algorithm>
 
 #ifndef TYPE

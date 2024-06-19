@@ -8,7 +8,6 @@
 #include <chrono>
 #include <algorithm>
 #include <string>
-#include <omp.h>
 
 #ifndef TYPE
 #define TYPE double

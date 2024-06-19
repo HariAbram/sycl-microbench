@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <sys/time.h>
 #include <chrono>
-#include <omp.h>
 
 
 void parallel_for_omp(int size, bool print, int iter);

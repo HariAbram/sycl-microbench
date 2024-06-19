@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <chrono>
 
+void std_memory_alloc(int size, int iter, bool print);
 
 void parallel_for_omp(int size, bool print, int iter);
 

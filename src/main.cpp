@@ -225,39 +225,9 @@ int main(int argc, char* argv[]) {
 
       memory_alloc(Q, n_row, block_size , true, iter);
 
-      timer time;
-      timer time1;
+      std_memory_alloc(n_row, 3, false);
 
-      time.start_timer();
-      for (size_t i = 0; i < 10; i++)
-      {
-          volatile TYPE * m = (TYPE *)std::malloc(sizeof(TYPE)*n_row*n_row);
-          m[n_row] = n_row;
-          free((TYPE*)m);
-          
-      }
-      time.end_timer();
- 
-      auto timings = (double*)malloc(sizeof(double)*iter);
-
-      TYPE* m = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*n_row*n_row);
-      TYPE* a = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*n_row*n_row);
-
-      std::fill(m,m+(n_row*n_row),0.0);
-      std::fill(a,a+(n_row*n_row),1.0);
-
-      for (size_t i = 0; i < iter; i++)
-      {
-        time1.start_timer();
-        kernel_copy( m,  a, n_row);
-        time1.end_timer();
-
-        timings[i] = time1.duration();   
-      }
-
-      free(m);
-      free(a);
-      print_results(timings,iter,n_row, "std memory", 1, 1);
+      std_memory_alloc(n_row, iter, true);
 
     }
     else if (reduction)

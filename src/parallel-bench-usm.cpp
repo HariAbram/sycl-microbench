@@ -40,11 +40,8 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
     for ( i = 0; i < iter; i++)
     {
         time.start_timer();
-
         auto m_host = sycl::malloc_host<TYPE>(size*size,Q); Q.wait();
-
         sycl::free(m_host,Q);
-
         time.end_timer();
 
         timings_alloc[i] = time.duration();
@@ -69,13 +66,11 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
     for (size_t i = 0; i < iter; i++)
     {   
-
         time1.start_timer();
         kernel_copy(Q, m_host, a_host, global);
         time1.end_timer();
 
         timings[i] = time1.duration();
-        
     }
 
     if (print)
@@ -99,12 +94,10 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
     for (size_t i = 0; i < iter; i++)
     {
-
         time1.start_timer();
         kernel_copy(Q,m_host,a_host,global,local);
         time1.end_timer();
-        timings_nd[i] = time1.duration();
-        
+        timings_nd[i] = time1.duration();   
     }
     
     sycl::free(m_host,Q);
@@ -162,14 +155,11 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 
     for (size_t i = 0; i < iter; i++)
     {
-        Q.wait();
-
         time1.start_timer();
         kernel_copy(Q, m_shared, a_shared, global);
         time1.end_timer();
 
         timings[i] = time1.duration();
-        
     }
 
     if (print)
@@ -313,17 +303,6 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
 void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter)
 {
 
-    /*
-    * creates a SYCL parallel region using <range> contruct for a given problem size 
-    * the dimensions of the range contruct can also be specified, the parameter <dim> 
-    * takes values 1 or 2. 
-    * 
-    * This benchmark tests the overhead incurred for the thread creation. each thread 
-    * computes a small kernel, which corresponds to dealy time. This benchmark uses USM
-    * to store the variables.
-    * 
-    */
-
     timer time;
 
     TYPE * sum = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
@@ -408,17 +387,6 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter)
 
 void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool print, int iter)
 {
-
-    /*
-    * creates a SYCL parallel region using <nd_range> contruct for a given problem size 
-    * the dimensions of the range contruct can also be specified, the parameter <dim> 
-    * takes values 1 or 2. 
-    * 
-    * This benchmark tests the overhead incurred for the thread creation. each thread 
-    * computes a small kernel, which corresponds to delay time. This benchmark uses USM
-    * to store the variables.
-    * 
-    */
 
     timer time;
 

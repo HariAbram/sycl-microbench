@@ -16,6 +16,55 @@
 #define TYPE double
 #endif
 
+
+void std_memory_alloc(int size, int iter, bool print)
+{
+  timer time;
+  timer time1;
+
+  auto timings_alloc = (double*)std::malloc(sizeof(double)*iter);
+  
+  for (size_t i = 0; i < iter; i++)
+  {
+      time.start_timer();
+      volatile TYPE * m = (TYPE *)std::malloc(sizeof(TYPE)*size*size);
+      m[size] = size;
+      free((TYPE*)m);
+      time.end_timer();
+      timings_alloc[i] = time.duration();
+      
+  }
+  
+  if (print)
+  {
+      print_results(timings_alloc, iter, size, "Host memory alloc(ms)",1, 1);
+  }
+  
+  auto timings = (double*)malloc(sizeof(double)*iter);
+
+  TYPE* m = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*size*size);
+  TYPE* a = (TYPE *)std::aligned_alloc(sizeof(TYPE)*1024*1024,sizeof(TYPE)*size*size);
+
+  std::fill(m,m+(size*size),0.0);
+  std::fill(a,a+(size*size),1.0);
+
+  for (size_t i = 0; i < iter; i++)
+  {
+    time1.start_timer();
+    kernel_copy( m,  a, size);
+    time1.end_timer();
+
+    timings[i] = time1.duration();   
+  }
+
+  free(m);
+  free(a);
+  if (print)
+  {
+    print_results(timings,iter,size, "std memory", 1, 1);
+  }
+}
+
 void parallel_for_omp(int size, bool print, int iter)
 {
     

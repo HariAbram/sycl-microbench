@@ -64,17 +64,6 @@ void memory_alloc(sycl::queue &Q, int size, int block_size , bool print, int ite
 void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter)
 {
 
-    /*
-    * creates a SYCL parallel region using <range> contruct for a given problem size. 
-    * the dimensions of the range contruct can also be specified, the parameter <dim> 
-    * takes values 1 or 2. 
-    * 
-    * This benchmark tests the overhead incurred for the thread creation. each thread 
-    * computes a small kernel, which corresponds to dealy time. This benchmark uses 
-    * buffer and accessors for memory management to store the variables. 
-    * 
-    */
-
     timer time;
 
     TYPE * sum = (TYPE *)std::malloc(size*size*sizeof(TYPE)); 
@@ -163,17 +152,6 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
 
 void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, bool print, int iter)
 {
-
-    /*
-    * creates a SYCL parallel region using <range> contruct for a given problem size 
-    * the dimensions of the range contruct can also be specified, the parameter <dim> 
-    * takes values 1 or 2. 
-    * 
-    * This benchmark tests the overhead incurred for the thread creation. each thread 
-    * computes a small kernel, which corresponds to dealy time. This benchmark uses 
-    * buffer and accessors for memory management to store the variables. 
-    * 
-    */
 
     timer time;
 

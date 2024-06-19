@@ -128,7 +128,7 @@ void kernel_parallel_1(sycl::queue &Q, TYPE* sum, sycl::range<1> global)
     Q.submit([&](sycl::handler& cgh){
         cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 
-            auto k = it.get_id(0);
+            const int k = it.get_id(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -146,7 +146,7 @@ void kernel_parallel_1(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::r
     Q.submit([&](sycl::handler& cgh){
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
-            auto k = it.get_global_id(0);
+            const int k = it.get_global_id(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -165,7 +165,7 @@ void kernel_parallel_1(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
 
         cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
             
-            auto k = it.get_id(0);
+            const int k = it.get_id(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -183,7 +183,7 @@ void kernel_parallel_1(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
 
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
             
-            auto k = it.get_global_id(0);
+            const int k = it.get_global_id(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -202,10 +202,10 @@ void kernel_parallel_2(sycl::queue &Q, TYPE* sum, sycl::range<2> global)
     Q.submit([&](sycl::handler& cgh){
         cgh.parallel_for<>(sycl::range<2>(global), [=](sycl::item<2>it){
 
-            auto k = it.get_id(0);
-            auto k1 = it.get_id(1);
+            const int k = it.get_id(0);
+            const int k1 = it.get_id(1);
 
-            auto N = it.get_range(0);
+            const int N = it.get_range(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -223,10 +223,10 @@ void kernel_parallel_2(sycl::queue &Q, TYPE* sum, sycl::range<2> global, sycl::r
     Q.submit([&](sycl::handler& cgh){
         cgh.parallel_for<>(sycl::nd_range<2>(global,local), [=](sycl::nd_item<2>it){
 
-            auto k = it.get_global_id(0);
-            auto k1 = it.get_global_id(1);
+            const int k = it.get_global_id(0);
+            const int k1 = it.get_global_id(1);
 
-            auto N = it.get_global_range(0);
+            const int N = it.get_global_range(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -244,10 +244,10 @@ void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
 
         cgh.parallel_for<>(sycl::range<2>(global), [=](sycl::item<2>it){
 
-            auto k = it.get_id(0);
-            auto k1 = it.get_id(1);
+            const int k = it.get_id(0);
+            const int k1 = it.get_id(1);
 
-            auto N = it.get_range(0);
+            const int N = it.get_range(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -265,10 +265,10 @@ void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
 
         cgh.parallel_for<>(sycl::nd_range<2>(global,local), [=](sycl::nd_item<2>it){
 
-            auto k = it.get_global_id(0);
-            auto k1 = it.get_global_id(1);
+            const int k = it.get_global_id(0);
+            const int k1 = it.get_global_id(1);
 
-            auto N = it.get_global_range(0);
+            const int N = it.get_global_range(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -322,7 +322,7 @@ void kernel_atomics(sycl::queue &Q, sycl::range<1> global, TYPE* m_shared, TYPE*
     Q.submit([&](sycl::handler& cgh){
         cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 
-            auto j = it.get_id(0);
+            const int j = it.get_id(0);
 
             auto v = sycl::atomic_ref<TYPE, sycl::memory_order::seq_cst,
                                     sycl::memory_scope::device,
@@ -346,7 +346,7 @@ void kernel_atomics(sycl::queue &Q, sycl::range<1> global, sycl::buffer<TYPE, 1>
 
         cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 
-            auto j = it.get_id(0);
+            const int j = it.get_id(0);
 
             auto v = sycl::atomic_ref<TYPE, sycl::memory_order::seq_cst,
                                 sycl::memory_scope::device,
@@ -388,7 +388,7 @@ void kernel_reduction(sycl::queue &Q, TYPE* sum, TYPE* m_shared, sycl::range<1> 
 
         cgh.parallel_for<>(sycl::range<1>(global), sum_red ,[=](sycl::item<1>it, auto &sum){
 
-            auto j = it.get_id(0);
+            const int j = it.get_id(0);
 
             sum += m_shared[j];
             
@@ -415,7 +415,7 @@ void kernel_reduction(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::buff
 
         cgh.parallel_for<>(sycl::range<1>(global), sum_red ,[=](sycl::item<1>it, auto &sum){
 
-            auto j = it.get_id(0);
+            const int j = it.get_id(0);
 
             sum += m_acc[j];
             
@@ -443,9 +443,9 @@ void kernel_global_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, syc
     Q.submit([&](sycl::handler& cgh){
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
-            auto k = it.get_global_id(0);
+            const int k = it.get_global_id(0);
 
-            auto e = it.get_local_id(0);
+            const int e = it.get_local_id(0);
 
             for (size_t l = 0; l < 1024+e; l++)
             {
@@ -466,9 +466,9 @@ void kernel_global_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::
 
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
-            auto k = it.get_global_id(0);
+            const int k = it.get_global_id(0);
 
-            auto e = it.get_local_id(0);
+            const int e = it.get_local_id(0);
 
             for (size_t l = 0; l < 1024+e; l++)
             {
@@ -486,9 +486,9 @@ void kernel_local_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl
     Q.submit([&](sycl::handler& cgh){
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1> it){
 
-            auto k = it.get_global_id(0);
+            const int k = it.get_global_id(0);
 
-            auto e = it.get_local_id(0);
+            const int e = it.get_local_id(0);
 
             for (size_t l = 0; l < 1024+e; l++)
             {
@@ -509,9 +509,9 @@ void kernel_local_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::r
 
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1> it){
 
-            auto k = it.get_global_id(0);
+            const int k = it.get_global_id(0);
 
-            auto e = it.get_local_id(0);
+            const int e = it.get_local_id(0);
 
             for (size_t l = 0; l < 1024+e; l++)
             {

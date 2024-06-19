@@ -37,7 +37,7 @@ void std_memory_alloc(int size, int iter, bool print)
   
   if (print)
   {
-      print_results(timings_alloc, iter, size, "Host memory alloc(ms)",1, 1);
+      print_results(timings_alloc, iter, size, "std memory alloc(ms)",1, 1);
   }
   
   auto timings = (double*)malloc(sizeof(double)*iter);

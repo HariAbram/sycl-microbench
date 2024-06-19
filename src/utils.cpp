@@ -29,7 +29,7 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
   */
   std::sort(timings, timings+iter);
   double median = timings[iter/2];
-  
+
   auto minmax = std::minmax_element(timings, timings+iter);
 
   double bandwidth = 1.0E-6 * 2 *size*size*sizeof(TYPE) / (*minmax.first*1E-9);
@@ -39,7 +39,7 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
 
   if (bench == 1 )
   {
-    if (benchmark == "Host memory alloc(ms)" || benchmark == "Shared memory alloc(ms)" || benchmark == "Device memory alloc(ms)")
+    if (benchmark == "Host memory alloc(ms)" || benchmark == "Shared memory alloc(ms)" || benchmark == "Device memory alloc(ms)" || benchmark == "std memory alloc(ms)")
     {
       std::cout
       << std::left << std::setw(24) << benchmark

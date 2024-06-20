@@ -44,6 +44,17 @@ obj = $(source:.cpp=.o)
 # Standard Flags
 CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=float
 
+# Debug Flags
+ifeq ($(DEBUG),yes)
+  CXXFLAGS  += -g 
+  LDFLAGS += -g
+endif
+
+# Optimization Flags
+ifeq ($(OPTIMIZE),yes)
+  CXXFLAGS += -Ofast
+endif
+
 ifeq ($(VENDOR), acpp)
 CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated -DACPP
 else ifeq ($(VENDOR), intel-llvm)
@@ -63,16 +74,7 @@ endif
 LDFLAGS = 
 
 
-# Debug Flags
-ifeq ($(DEBUG),yes)
-  CXXFLAGS  += -g 
-  LDFLAGS += -g
-endif
 
-# Optimization Flags
-ifeq ($(OPTIMIZE),yes)
-  CXXFLAGS += -Ofast
-endif
 #===============================================================================
 # Targets to Build
 #===============================================================================

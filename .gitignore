@@ -9,6 +9,7 @@
 *.json
 /bin/*
 *.data
+/paralle_micro
 
 # Packages #
 ############

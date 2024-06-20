@@ -55,7 +55,7 @@ endif
 ifeq ($(ARCH), a64fx)
 CXXFLAGS += -mcpu=a64fx+sve
 else ifeq ($(ARCH), x86)
-CXXFLAGS += -mcpu=native
+CXXFLAGS += -march=native
 endif
 
 

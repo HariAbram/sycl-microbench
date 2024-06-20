@@ -26,7 +26,7 @@ static struct option long_options[] = {
   /* name, has_arg, flag, val */
   {"block size", 1, NULL, 'b'},
   {"size", 1, NULL, 's'},
-  {"vec-add", 0, NULL, 'v'},
+  {"mat-vec", 0, NULL, 'v'},
   {"mat-mul", 0, NULL, 'm'},
   {"mem-alloc", 0, NULL, 'a'},
   {"reduction", 0, NULL, 'r'},
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     int block_size = 16;
 
 
-    bool vec_add = false;
+    bool mat_vec = false;
     bool mat_mul=false;
     bool mem_alloc=false;
     bool reduction=false;
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
         block_size = atoi(optarg);
         break;
       case 'v':
-        vec_add = true;
+        mat_vec = true;
         break;
       case 'm':
         mat_mul = true;
@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
 
       std::cout<<"Usage: \n"<< argv[0]<< " [-s size |-b blocksize <optional> |-t No. iterations | --print-system\n"
                                         " --mat-mul : to run matrix multiplication \n" 
-                                        " --vec-add : to run vector addition \n"
+                                        " --mat-vec : to run matrix vector multiplication \n"
                                         "             can run only mat-mul or vec-add at a time, can't run both simultaneously \n"
                                         " --mem-alloc : to alloc memory using SYCL and standard malloc \n"
                                         " --reduction : to test reduction using atomics and sycl reduction construct\n"
@@ -177,23 +177,23 @@ int main(int argc, char* argv[]) {
       }
 
     }
-    else if (vec_add)
+    else if (mat_vec)
     {
       if (vec_no==1)
       {
-        vec_add_range_usm(Q, n_row);
+        mat_vec_range_usm(Q, n_row);
       }
       else if (vec_no == 2)
       {
-        vec_add_range_buff_acc(Q, n_row);
+        mat_vec_range_buff_acc(Q, n_row);
       }
       else if (vec_no == 3)
       {
-        vec_add_ndrange_usm(Q, n_row, block_size);
+        mat_vec_ndrange_usm(Q, n_row, block_size);
       }
       else if (vec_no == 4)
       {
-        vec_add_ndrange_buff_acc(Q, n_row, block_size);
+        mat_vec_ndrange_buff_acc(Q, n_row, block_size);
       }
 
     }

@@ -19,7 +19,6 @@ using shared_allocator = sycl::usm_allocator<TYPE, sycl::usm::alloc::shared>;
 
 bool verification (TYPE *m1, TYPE *m2 , TYPE *m3, int size)
 {
-
     bool result = true;
 
     for (size_t i = 0; i < size; i++)
@@ -45,90 +44,112 @@ bool verification (TYPE *m1, TYPE *m2 , TYPE *m3, int size)
 }
 
 
-void vec_add_range_usm(sycl::queue &Q, int size)
+void mat_vec_range_usm(sycl::queue &Q, int size)
 {
-
+    timer time;
 
     TYPE * __restrict__ v1 = sycl::malloc_shared<TYPE>(size*sizeof(TYPE),Q); Q.wait();
     TYPE * __restrict__ v2 = sycl::malloc_shared<TYPE>(size*sizeof(TYPE),Q); Q.wait();
-    TYPE * __restrict__ v3 = sycl::malloc_shared<TYPE>(size*sizeof(TYPE),Q); Q.wait();
+    TYPE * __restrict__ m1 = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
 
-    
     std::fill(v1,v1+size,1);
     std::fill(v2,v2+size,1);
-    std::fill(v3,v3+size,1);
+    std::fill(m1,m1+(size*size),1);
 
     auto N = static_cast<size_t>(size);
 
     sycl::range<1> global{N};
-   
+    time.start_timer();
 
-    Q.parallel_for<class vec_add_r_usm>(sycl::range<1>(global), [=](sycl::item<1>it){
+    Q.submit([&](sycl::handler& cgh){
+        cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 
-        auto i = it.get_id(0);
+            const int i = it.get_id(0);
 
-        v3[i] = v2[i] + v1[i];
+            const int N = it.get_range(0);
 
+            for (size_t k = 0; k < N; k++)
+            {
+                v2[i] += m1[i*N+k] * v1[k];
+            }
+        });
     });
     Q.wait();
+    time.end_timer();
 
-    free(v1,Q);
-    free(v2,Q);
-    free(v3,Q);
+    auto kernel_offload_time = time.duration();
+    std::cout << "Time taken for mat vec for range with USM "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+
+    sycl::free(v1,Q);
+    sycl::free(v2,Q);
+    sycl::free(m1,Q);
 
 }
 
 
-void vec_add_range_buff_acc(sycl::queue &Q, int size)
+void mat_vec_range_buff_acc(sycl::queue &Q, int size)
 {
+    timer time;
 
     TYPE * __restrict__ v1 = (TYPE *)malloc(size*sizeof(TYPE));
     TYPE * __restrict__ v2 = (TYPE *)malloc(size*sizeof(TYPE));
-    TYPE * __restrict__ v3 = (TYPE *)malloc(size*sizeof(TYPE));
+    TYPE * __restrict__ m1 = (TYPE *)malloc(size*size*sizeof(TYPE));
 
     std::fill(v1,v1+size,1);
-    std::fill(v1,v1+size,1);
+    std::fill(v2,v2+size,0);
+    std::fill(m1,(m1+size*size),2);
 
     sycl::buffer<TYPE,1> v1_buff(v1,size);
     sycl::buffer<TYPE,1> v2_buff(v2,size);
-    sycl::buffer<TYPE,1> v3_buff(v3,size);
+    sycl::buffer<TYPE,1> m1_buff(m1,size*size);
 
     auto N = static_cast<size_t>(size);
 
     sycl::range<1> global{N};
-    
+    time.start_timer();
+
     Q.submit([&](sycl::handler& cgh){
         auto v1_acc = v1_buff.get_access<sycl::access::mode::read>(cgh);
-        auto v2_acc = v2_buff.get_access<sycl::access::mode::read>(cgh);
-        auto v3_acc = v3_buff.get_access<sycl::access::mode::read_write>(cgh);
+        auto v2_acc = v2_buff.get_access<sycl::access::mode::read_write>(cgh);
+        auto m1_acc = m1_buff.get_access<sycl::access::mode::read>(cgh);
 
-        cgh.parallel_for<class vec_add_r_ba>(sycl::range<1>(global), [=](sycl::item<1>it){
+        cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 
-            auto i = it.get_id(0);
+            const int i = it.get_id(0);
 
-            v3_acc[i] = v2_acc[i] + v1_acc[i];
+            const int N = it.get_range(0);
 
+            for (size_t k = 0; k < N; k++)
+            {
+                v2_acc[i] += m1_acc[i*N+k] * v1_acc[k];
+            }
         });
-
     });
     Q.wait();
+    time.end_timer();
+    auto kernel_offload_time = time.duration();
+    std::cout << "Time taken for mat vec for range with BA "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     free(v1);
     free(v2);
-    free(v3);
+    free(m1);
 
 }
 
-void vec_add_ndrange_usm(sycl::queue &Q, int size, int block_size)
+void mat_vec_ndrange_usm(sycl::queue &Q, int size, int block_size)
 {
+    timer time;
 
     TYPE * __restrict__ v1 = sycl::malloc_shared<TYPE>(size*sizeof(TYPE),Q); Q.wait();
     TYPE * __restrict__ v2 = sycl::malloc_shared<TYPE>(size*sizeof(TYPE),Q); Q.wait();
-    TYPE * __restrict__ v3 = sycl::malloc_shared<TYPE>(size*sizeof(TYPE),Q); Q.wait();
+    TYPE * __restrict__ m1 = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
 
-    std::fill(v1,v1+size,1);
-    std::fill(v1,v1+size,1);
-    
+    std::fill(v1,v1+size,1.0);
+    std::fill(v2,v2+size,0.0);
+    std::fill(m1,m1+(size*size),2.0);
+
+    Q.wait();
+
     auto N = static_cast<size_t>(size);
 
     sycl::range<1> global{N};
@@ -140,35 +161,48 @@ void vec_add_ndrange_usm(sycl::queue &Q, int size, int block_size)
         N_b = N;
     }
     sycl::range<1> local{N_b};
+    time.start_timer();
 
-    Q.parallel_for<class vec_add_ndr_usm>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
+    Q.submit([&](sycl::handler& cgh){
+        cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
-        auto i = it.get_global_id(0);
+            const int i = it.get_global_id(0);
+            const int N = it.get_global_range(0);
+            
+            for (size_t k = 0; k < N; k++)
+            {
+                v2[i] += m1[i*N+k] * v1[k];
+            }
 
-        v3[i] = v2[i] + v1[i];
-
+        });
     });
     Q.wait();
+    time.end_timer();
 
-    free(v1,Q);
-    free(v2,Q);
-    free(v3,Q);
+    auto kernel_offload_time = time.duration();
+    std::cout << "Time taken for mat vec for ndrange with USM "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+
+    sycl::free(v1,Q);
+    sycl::free(v2,Q);
+    sycl::free(m1,Q);
 
 }
 
-void vec_add_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
+void mat_vec_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
 {
+    timer time;
 
     TYPE * __restrict__ v1 = (TYPE *)malloc(size*sizeof(TYPE));
     TYPE * __restrict__ v2 = (TYPE *)malloc(size*sizeof(TYPE));
-    TYPE * __restrict__ v3 = (TYPE *)malloc(size*sizeof(TYPE));
+    TYPE * __restrict__ m1 = (TYPE *)malloc(size*size*sizeof(TYPE));
 
-    std::fill(v1,v1+size,1);
-    std::fill(v1,v1+size,1);
+    std::fill(v1,v1+size,1.0);
+    std::fill(v2,v2+size,0.0);
+    std::fill(m1,m1+(size*size),2.0);
 
     sycl::buffer<TYPE,1> v1_buff(v1,size);
     sycl::buffer<TYPE,1> v2_buff(v2,size);
-    sycl::buffer<TYPE,1> v3_buff(v3,size);
+    sycl::buffer<TYPE,1> m1_buff(m1,size*size);
 
     auto N = static_cast<size_t>(size);
 
@@ -181,32 +215,36 @@ void vec_add_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
         N_b = N;
     }
     sycl::range<1> local{N_b};
-   
+    time.start_timer();
+    
     Q.submit([&](sycl::handler& cgh){
         auto v1_acc = v1_buff.get_access<sycl::access::mode::read>(cgh);
-        auto v2_acc = v2_buff.get_access<sycl::access::mode::read>(cgh);
-        auto v3_acc = v3_buff.get_access<sycl::access::mode::read_write>(cgh);
+        auto v2_acc = v2_buff.get_access<sycl::access::mode::read_write>(cgh);
+        auto m1_acc = m1_buff.get_access<sycl::access::mode::read>(cgh);
 
-        cgh.parallel_for<class vec_add_ndr_ba>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
+        cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
-            auto i = it.get_global_id(0);
+            const int i = it.get_global_id(0);
+            const int N = it.get_global_range(0);
 
-            v3_acc[i] = v2_acc[i] + v1_acc[i];
-
+            for (size_t k = 0; k < N; k++)
+            {
+                v2_acc[i] += m1_acc[i*N+k] * v1_acc[k];
+            }
         });
-
     });
     Q.wait();
+    time.end_timer();
+
+    auto kernel_offload_time = time.duration();
+    std::cout << "Time taken for mat vec for range with BA "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     free(v1);
     free(v2);
-    free(v3);
-
-
+    free(m1);
 }
 
-
-
+////////////////////////////////////////////////////////// mat-mul
 
 void mat_mul_range_usm(sycl::queue &Q, int size)
 {
@@ -221,33 +259,28 @@ void mat_mul_range_usm(sycl::queue &Q, int size)
 
     std::fill(m1,m1+size*size,1);
     std::fill(m2,m2+size*size,1);
-
-    //auto N_m = static_cast<size_t>(size*size);
+    std::fill(m3,m3+size*size,0.0);
 
     sycl::range<2> global1 {N,N};
 
     time.start_timer();
 
+    Q.submit([&](sycl::handler& cgh){
+        cgh.parallel_for< >(sycl::range<2>(global1), [=](sycl::item<2>it){
 
-    Q.parallel_for< >(sycl::range<2>(global1), [=](sycl::item<2>it){
+            auto i = it.get_id(0);
+            auto j = it.get_id(1);
 
-        auto i = it.get_id(0);
-        auto j = it.get_id(1);
+            float temp = 0.0;
 
-        float temp = 0.0;
+            for (size_t k = 0; k < N; k++)
+            {
+                temp += m2[i*N+k]*m1[k*N+j];
+            }
 
-        for (size_t k = 0; k < N; k++)
-        {
-            temp += m2[i*N+k]*m1[k*N+j];
-        }
-
-        m3[i*N+j] = temp;
-        
-
+            m3[i*N+j] = temp;
+        });
     });
-
-
-
     Q.wait();
 
     time.end_timer();
@@ -260,16 +293,10 @@ void mat_mul_range_usm(sycl::queue &Q, int size)
     auto kernel_offload_time = time.duration();
     std::cout << "Time taken for mat mul for range with USM "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
-
-    free(m1,Q);
-    free(m2,Q);
-    free(m3,Q);
-
-
-
+    sycl::free(m1,Q);
+    sycl::free(m2,Q);
+    sycl::free(m3,Q);
 }
-
-
 
 void mat_mul_range_buff_acc(sycl::queue &Q, int size)
 {
@@ -285,6 +312,7 @@ void mat_mul_range_buff_acc(sycl::queue &Q, int size)
 
     std::fill(m1,m1+size*size,1);
     std::fill(m2,m2+size*size,1);
+    std::fill(m3,m3+size*size,0.0);
 
     sycl::buffer<TYPE,1> m1_buff(m1,size*size);
     sycl::buffer<TYPE,1> m2_buff(m2,size*size);
@@ -317,11 +345,7 @@ void mat_mul_range_buff_acc(sycl::queue &Q, int size)
         });
 
     });
-
-
-    
     Q.wait();
-
     
     time.end_timer();
 
@@ -336,16 +360,10 @@ void mat_mul_range_buff_acc(sycl::queue &Q, int size)
     auto kernel_offload_time = time.duration();
     std::cout << "Time taken for mat mul for range with buff and acc "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
-
     free(m1);
     free(m2);
     free(m3);
-
-
-
 }
-
-
 
 void mat_mul_ndrange_usm(sycl::queue &Q, int size, int block_size)
 {
@@ -368,6 +386,7 @@ void mat_mul_ndrange_usm(sycl::queue &Q, int size, int block_size)
 
     std::fill(m1,m1+size*size,1);
     std::fill(m2,m2+size*size,1);
+    std::fill(m3,m3+size*size,0.0);
 
     //auto N_m = static_cast<size_t>(size*size);
 
@@ -376,26 +395,23 @@ void mat_mul_ndrange_usm(sycl::queue &Q, int size, int block_size)
 
     time.start_timer();
 
+    Q.submit([&](sycl::handler& cgh){
+        cgh.parallel_for< >(sycl::nd_range<2>(global1,local1), [=](sycl::nd_item<2>it){
 
-    Q.parallel_for< >(sycl::nd_range<2>(global1,local1), [=](sycl::nd_item<2>it){
+            auto i = it.get_global_id(0);
+            auto j = it.get_global_id(1);
 
-        auto i = it.get_global_id(0);
-        auto j = it.get_global_id(1);
+            TYPE temp = 0.0;
 
-        TYPE temp = 0.0;
+            for (size_t k = 0; k < N; k++)
+            {
+                temp+= m2[i*N+k]*m1[k*N+j];
+            }
 
-        for (size_t k = 0; k < N; k++)
-        {
-            temp+= m2[i*N+k]*m1[k*N+j];
-        }
+            m3[i*N+j] = temp;
 
-        m3[i*N+j] = temp;
-
+        });
     });
-
-
-
-    
     Q.wait();
 
     time.end_timer();
@@ -408,16 +424,10 @@ void mat_mul_ndrange_usm(sycl::queue &Q, int size, int block_size)
     auto kernel_offload_time = time.duration();
     std::cout << "Time taken for mat mul for nd_range with USM  "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
-
-    free(m1,Q);
-    free(m2,Q);
-    free(m3,Q);
-
-
-
+    sycl::free(m1,Q);
+    sycl::free(m2,Q);
+    sycl::free(m3,Q);
 }
-
-
 
 void mat_mul_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
 {
@@ -440,6 +450,7 @@ void mat_mul_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
 
     std::fill(m1,m1+size*size,1);
     std::fill(m2,m2+size*size,1);
+    std::fill(m3,m3+size*size,0.0);
 
     sycl::buffer<TYPE,1> m1_buff(m1,size*size);
     sycl::buffer<TYPE,1> m2_buff(m2,size*size);
@@ -473,13 +484,8 @@ void mat_mul_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
         });
 
     });
-
-    
-
-    
     Q.wait();
 
-    
     time.end_timer();
 
     auto m3_r = m3_buff.get_host_access();
@@ -496,7 +502,5 @@ void mat_mul_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
     free(m1);
     free(m2);
     free(m3);
-
-
 
 }

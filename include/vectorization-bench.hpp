@@ -9,13 +9,13 @@
 
 using namespace cl;
 
-void vec_add_range_usm(sycl::queue &Q, int size);
+void mat_vec_range_usm(sycl::queue &Q, int size);
 
-void vec_add_range_buff_acc(sycl::queue &Q, int size);
+void mat_vec_range_buff_acc(sycl::queue &Q, int size);
 
-void vec_add_ndrange_usm(sycl::queue &Q, int size, int block_size);
+void mat_vec_ndrange_usm(sycl::queue &Q, int size, int block_size);
 
-void vec_add_ndrange_buff_acc(sycl::queue &Q, int size, int block_size);
+void mat_vec_ndrange_buff_acc(sycl::queue &Q, int size, int block_size);
 
 void mat_mul_range_usm(sycl::queue &Q, int size);
 

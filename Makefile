@@ -56,7 +56,7 @@ ifeq ($(OPTIMIZE),yes)
 endif
 
 ifeq ($(VENDOR), acpp)
-CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated -DACPP
+CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated -DACPP 
 else ifeq ($(VENDOR), intel-llvm)
 CXXFLAGS += -fsycl -fopenmp 
 else 
@@ -66,7 +66,7 @@ endif
 ifeq ($(ARCH), a64fx)
 CXXFLAGS += -mcpu=a64fx+sve
 else ifeq ($(ARCH), x86)
-CXXFLAGS += -march=native
+CXXFLAGS += -march=native -xAVX512
 endif
 
 

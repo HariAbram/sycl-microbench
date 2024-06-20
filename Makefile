@@ -47,7 +47,7 @@ CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=float
 ifeq ($(VENDOR), acpp)
 CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated -DACPP
 else ifeq ($(VENDOR), intel-llvm)
-CXXFLAGS += -fsycl -fopenmp
+CXXFLAGS += -fsycl -fopenmp -no-vec -mno-scatter -mno-gather
 else 
 CXXFLAGS += -fsycl -qopenmp 
 endif

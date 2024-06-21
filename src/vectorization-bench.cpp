@@ -35,9 +35,7 @@ bool verification (TYPE *m1, TYPE *m2 , TYPE *m3, int size)
                 result = false;
                 return result;
             }
-            
-        }
-        
+        }        
     }
     return result;
 
@@ -52,9 +50,9 @@ void mat_vec_range_usm(sycl::queue &Q, int size)
     TYPE * __restrict__ v2 = sycl::malloc_shared<TYPE>(size*sizeof(TYPE),Q); Q.wait();
     TYPE * __restrict__ m1 = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
 
-    std::fill(v1,v1+size,1);
-    std::fill(v2,v2+size,1);
-    std::fill(m1,m1+(size*size),1);
+    std::fill(v1,v1+size,1.0);
+    std::fill(v2,v2+size,0.0);
+    std::fill(m1,m1+(size*size),2.0);
 
     auto N = static_cast<size_t>(size);
 
@@ -67,11 +65,12 @@ void mat_vec_range_usm(sycl::queue &Q, int size)
             const int i = it.get_id(0);
 
             const int N = it.get_range(0);
-
+            TYPE temp = 0.0;
             for (size_t k = 0; k < N; k++)
             {
-                v2[i] += m1[i*N+k] * v1[k];
+                temp += m1[i*N+k] * v1[k];
             }
+            v2[i] = temp;
         });
     });
     Q.wait();
@@ -95,9 +94,9 @@ void mat_vec_range_buff_acc(sycl::queue &Q, int size)
     TYPE * __restrict__ v2 = (TYPE *)malloc(size*sizeof(TYPE));
     TYPE * __restrict__ m1 = (TYPE *)malloc(size*size*sizeof(TYPE));
 
-    std::fill(v1,v1+size,1);
-    std::fill(v2,v2+size,0);
-    std::fill(m1,(m1+size*size),2);
+    std::fill(v1,v1+size,1.0);
+    std::fill(v2,v2+size,0.0);
+    std::fill(m1,(m1+size*size),2.0);
 
     sycl::buffer<TYPE,1> v1_buff(v1,size);
     sycl::buffer<TYPE,1> v2_buff(v2,size);
@@ -118,11 +117,12 @@ void mat_vec_range_buff_acc(sycl::queue &Q, int size)
             const int i = it.get_id(0);
 
             const int N = it.get_range(0);
-
+            TYPE temp = 0.0;
             for (size_t k = 0; k < N; k++)
             {
-                v2_acc[i] += m1_acc[i*N+k] * v1_acc[k];
+                temp += m1_acc[i*N+k] * v1_acc[k];
             }
+            v2_acc[i] = temp;
         });
     });
     Q.wait();
@@ -168,12 +168,12 @@ void mat_vec_ndrange_usm(sycl::queue &Q, int size, int block_size)
 
             const int i = it.get_global_id(0);
             const int N = it.get_global_range(0);
-            
+            TYPE temp = 0.0;
             for (size_t k = 0; k < N; k++)
             {
-                v2[i] += m1[i*N+k] * v1[k];
+                temp += m1[i*N+k] * v1[k];
             }
-
+            v2[i] = temp;
         });
     });
     Q.wait();
@@ -226,11 +226,12 @@ void mat_vec_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
 
             const int i = it.get_global_id(0);
             const int N = it.get_global_range(0);
-
+            TYPE temp = 0.0;
             for (size_t k = 0; k < N; k++)
             {
-                v2_acc[i] += m1_acc[i*N+k] * v1_acc[k];
+                temp += m1_acc[i*N+k] * v1_acc[k];
             }
+            v2_acc[i] = temp;
         });
     });
     Q.wait();
@@ -257,8 +258,8 @@ void mat_mul_range_usm(sycl::queue &Q, int size)
     TYPE * __restrict__ m2 = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
     TYPE * __restrict__ m3 = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
 
-    std::fill(m1,m1+size*size,1);
-    std::fill(m2,m2+size*size,1);
+    std::fill(m1,m1+size*size,1.0);
+    std::fill(m2,m2+size*size,1.0);
     std::fill(m3,m3+size*size,0.0);
 
     sycl::range<2> global1 {N,N};
@@ -310,8 +311,8 @@ void mat_mul_range_buff_acc(sycl::queue &Q, int size)
     TYPE * __restrict__ m2 = (TYPE *)malloc(size*size*sizeof(TYPE));
     TYPE * __restrict__ m3 = (TYPE *)malloc(size*size*sizeof(TYPE));
 
-    std::fill(m1,m1+size*size,1);
-    std::fill(m2,m2+size*size,1);
+    std::fill(m1,m1+size*size,1.0);
+    std::fill(m2,m2+size*size,1.0);
     std::fill(m3,m3+size*size,0.0);
 
     sycl::buffer<TYPE,1> m1_buff(m1,size*size);

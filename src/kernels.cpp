@@ -24,11 +24,9 @@ void init_arrays(sycl::queue &Q, TYPE *m, TYPE *a, sycl::range<1> global)
         cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1> it){
 
             const int k = it.get_id(0);
-
             m[k] = 0.0;
-
             a[k] = 1.0;
-
+            
         });
     });
     Q.wait();
@@ -129,16 +127,13 @@ void kernel_parallel_1(sycl::queue &Q, TYPE* sum, sycl::range<1> global)
         cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 
             const int k = it.get_id(0);
-            #pragma novector
             for (size_t l = 0; l < 1024; l++)
             {
-                sum[k] += 1;
                 if (sum[k] < 0)
                 {
                     break;
-                    //sum[k] = 0.0;
                 }
-                
+                sum[k] += 1;
             }
         });
     });
@@ -154,13 +149,12 @@ void kernel_parallel_1(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::r
 
             const int k = it.get_global_id(0);
             for (size_t l = 0; l < 1024; l++)
-            {
-                sum[k] += 1;  
+            {  
                 if (sum[k] < 0)
                 {
                     break;
-                    //sum[k] = 0.0;
                 }  
+                sum[k] += 1;
             }
         });
     });
@@ -178,12 +172,11 @@ void kernel_parallel_1(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
             const int k = it.get_id(0);
             for (size_t l = 0; l < 1024; l++)
             {
-                sum_acc[k] += 1; 
                 if (sum_acc[k] < 0)
                 {
                     break;
-                    //sum_acc[k] = 0.0;
                 } 
+                sum_acc[k] += 1;
             }
         });
     });
@@ -200,12 +193,11 @@ void kernel_parallel_1(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
             const int k = it.get_global_id(0);
             for (size_t l = 0; l < 1024; l++)
             {
-                sum_acc[k] += 1;  
                 if (sum_acc[k] < 0)
                 {
                     break;
-                    //sum_acc[k] = 0.0;
-                }   
+                } 
+                sum_acc[k] += 1;    
             }
         });
     });
@@ -226,12 +218,11 @@ void kernel_parallel_2(sycl::queue &Q, TYPE* sum, sycl::range<2> global)
             const int N = it.get_range(0);
             for (size_t l = 0; l < 1024; l++)
             {
-                sum[k*N+k1] += 1;  
                 if (sum[k*N+k1] < 0)
                 {
                     break;
-                    //sum[k*N+k1] = 0.0;
                 } 
+                sum[k*N+k1] += 1;  
             }
         });
     });
@@ -251,12 +242,11 @@ void kernel_parallel_2(sycl::queue &Q, TYPE* sum, sycl::range<2> global, sycl::r
             const int N = it.get_global_range(0);
             for (size_t l = 0; l < 1024; l++)
             {
-                sum[k*N+k1] += 1;
                 if (sum[k*N+k1] < 0)
                 {
                     break;
-                    //sum[k*N+k1] = 0.0;
-                }     
+                }  
+                sum[k*N+k1] += 1;   
             }
         });
     });
@@ -276,12 +266,11 @@ void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
             const int N = it.get_range(0);
             for (size_t l = 0; l < 1024; l++)
             {
-                sum_acc[k*N+k1] += 1;   
                 if (sum_acc[k*N+k1] < 0)
                 {
                     break;
-                    //sum_acc[k*N+k1] = 0.0;
-                }   
+                }  
+                sum_acc[k*N+k1] += 1; 
             }
         });
     });
@@ -301,12 +290,11 @@ void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
             const int N = it.get_global_range(0);
             for (size_t l = 0; l < 1024; l++)
             {
-                sum_acc[k*N+k1] += 1;
                 if (sum_acc[k*N+k1] < 0)
                 {
                     break;
-                    //sum_acc[k*N+k1] = 0.0;
                 } 
+                sum_acc[k*N+k1] += 1;
             }        
         });
     });
@@ -324,12 +312,11 @@ void kernel_parallel_omp(int size, TYPE* sum)
     {
         for (size_t l = 0; l < 1024; l++)
         {
-            sum[j] += 1;
             if (sum[j] < 0)
             {
                 break;
-                //sum[j] = 0.0;
             } 
+            sum[j] += 1;
         }
     };
     }
@@ -346,12 +333,11 @@ void kernel_parallel_omp_nested(int size, TYPE* sum)
         {
             for (size_t l = 0; l < 1024; l++)
             {
-                sum[j*size+k] += 1;
                 if (sum[j*size+k] < 0)
                 {
                     break;
-                    //sum[j*size+k] = 0.0;
                 } 
+                sum[j*size+k] += 1;
             }
         }
     }
@@ -493,6 +479,10 @@ void kernel_global_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, syc
 
             for (size_t l = 0; l < 1024+e; l++)
             {
+                if (sum[k] < 0)
+                {
+                    break;
+                } 
                 sum[k]+= 1;
             }
 
@@ -516,6 +506,10 @@ void kernel_global_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::
 
             for (size_t l = 0; l < 1024+e; l++)
             {
+                if (sum_acc[k] < 0)
+                {
+                    break;
+                } 
                 sum_acc[k]+= 1;
             }
 
@@ -536,6 +530,10 @@ void kernel_local_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl
 
             for (size_t l = 0; l < 1024+e; l++)
             {
+                if (sum[k] < 0)
+                {
+                    break;
+                } 
                 sum[k]+= 1;
             }
 
@@ -559,6 +557,10 @@ void kernel_local_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::r
 
             for (size_t l = 0; l < 1024+e; l++)
             {
+                if (sum_acc[k] < 0)
+                {
+                    break;
+                } 
                 sum_acc[k]+= 1;
             }
 
@@ -576,11 +578,13 @@ void kernel_barrier_omp(int size, TYPE* sum)
     {
         #pragma omp for
         for (size_t j = 0; j < size*size; j++)        
-        {
-//            int tid = omp_get_thread_num();
-            
+        {   
             for (size_t l = 0; l < 1024; l++)
             {
+                if (sum[j] < 0)
+                {
+                    break;
+                } 
                 sum[j] += 1;
             } 
                     

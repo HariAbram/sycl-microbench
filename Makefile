@@ -60,13 +60,13 @@ CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accele
 else ifeq ($(VENDOR), intel-llvm)
 CXXFLAGS += -fsycl -fopenmp 
 else 
-CXXFLAGS += -fsycl -qopenmp -DDPCPP
+CXXFLAGS += -fsycl -qopenmp -DDPCPP 
 endif
 
 ifeq ($(ARCH), a64fx)
 CXXFLAGS += -mcpu=a64fx+sve
 else ifeq ($(ARCH), x86)
-CXXFLAGS += -march=native -mavx512f
+CXXFLAGS += -march=native 
 endif
 
 

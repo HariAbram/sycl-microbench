@@ -109,14 +109,14 @@ void delay_time(int size)
     TYPE  sum = 0.0; 
 
     time.start_timer();
-
     for (size_t l = 0; l < 1024; l++)
     {
-        sum += 1;
-        if (sum < 0)
-        {
-            break;
-        } 
+      if (sum < 0)
+      {
+          break;
+      } 
+      sum += 1;
+      
     }
 
     time.end_timer();

@@ -68,7 +68,7 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
 
     TYPE * sum = (TYPE *)std::malloc(size*size*sizeof(TYPE)); 
 
-    std::fill(sum,sum+(size*size),0);
+    std::fill(sum,sum+(size*size),0.0);
     
     auto N = static_cast<size_t>(size);
 
@@ -157,7 +157,7 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
     TYPE * sum = (TYPE *)malloc(size*size*sizeof(TYPE)); 
 
-    std::fill(sum,sum+(size*size),0);
+    std::fill(sum,sum+(size*size),0.0);
    
     auto N = static_cast<size_t>(size);
 

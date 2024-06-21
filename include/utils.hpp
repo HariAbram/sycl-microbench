@@ -19,8 +19,6 @@
 
 void print_results(double *timings, int iter, int size, std::string benchmark, int dim, int bench);
 
-double delay_time();
-
-
+void delay_time(int size);
 
 #endif

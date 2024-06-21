@@ -103,25 +103,26 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
 
 }
 
-double delay_time()
+void delay_time(int size)
 {
     timer time;
+    TYPE  sum = 0.0; 
+
     time.start_timer();
-    TYPE sum = 0;
+
     for (size_t l = 0; l < 1024; l++)
     {
         sum += 1;
-        
         if (sum < 0)
         {
-            sum = 0;
-        }
-        
+            break;
+        } 
     }
+
     time.end_timer();
     auto kernel_offload_time = time.duration()/(1E+9);
 
-    return kernel_offload_time;
+    std::cout << "time taken by each thread "<< kernel_offload_time << " seconds\n" << std::endl;
 
 }
 

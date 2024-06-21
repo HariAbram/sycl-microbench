@@ -307,7 +307,7 @@ void range_with_usm(sycl::queue &Q, int size, int dim, bool print, int iter)
 
     TYPE * sum = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
 
-    std::fill(sum,sum+(size*size),0);
+    std::fill(sum,sum+(size*size),0.0);
 
     auto N = static_cast<size_t>(size);
 
@@ -392,7 +392,7 @@ void nd_range_with_usm(sycl::queue &Q, int size, int block_size ,int dim, bool p
 
     TYPE * sum = sycl::malloc_shared<TYPE>(size*size*sizeof(TYPE),Q); Q.wait();
 
-    std::fill(sum,sum+(size*size),0);
+    std::fill(sum,sum+(size*size),0.0);
 
     auto N = static_cast<size_t>(size);
 

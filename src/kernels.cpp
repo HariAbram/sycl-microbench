@@ -129,14 +129,16 @@ void kernel_parallel_1(sycl::queue &Q, TYPE* sum, sycl::range<1> global)
         cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
 
             const int k = it.get_id(0);
-#if defined(DPCPP) 
-#pragma novector
-#else
-#pragma clang loop vectorize(disable)
-#endif
+            #pragma novector
             for (size_t l = 0; l < 1024; l++)
             {
                 sum[k] += 1;
+                if (sum[k] < 0)
+                {
+                    break;
+                    //sum[k] = 0.0;
+                }
+                
             }
         });
     });
@@ -151,14 +153,14 @@ void kernel_parallel_1(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::r
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
 
             const int k = it.get_global_id(0);
-#if defined(DPCPP) 
-#pragma novector
-#else
-#pragma clang loop vectorize(disable)
-#endif
             for (size_t l = 0; l < 1024; l++)
             {
-                sum[k] += 1;    
+                sum[k] += 1;  
+                if (sum[k] < 0)
+                {
+                    break;
+                    //sum[k] = 0.0;
+                }  
             }
         });
     });
@@ -174,14 +176,14 @@ void kernel_parallel_1(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
         cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1>it){
             
             const int k = it.get_id(0);
-#if defined(DPCPP) 
-#pragma novector
-#else
-#pragma clang loop vectorize(disable)
-#endif
             for (size_t l = 0; l < 1024; l++)
             {
                 sum_acc[k] += 1; 
+                if (sum_acc[k] < 0)
+                {
+                    break;
+                    //sum_acc[k] = 0.0;
+                } 
             }
         });
     });
@@ -196,14 +198,14 @@ void kernel_parallel_1(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
             
             const int k = it.get_global_id(0);
-#if defined(DPCPP) 
-#pragma novector
-#else
-#pragma clang loop vectorize(disable)
-#endif
             for (size_t l = 0; l < 1024; l++)
             {
-                sum_acc[k] += 1;    
+                sum_acc[k] += 1;  
+                if (sum_acc[k] < 0)
+                {
+                    break;
+                    //sum_acc[k] = 0.0;
+                }   
             }
         });
     });
@@ -222,14 +224,14 @@ void kernel_parallel_2(sycl::queue &Q, TYPE* sum, sycl::range<2> global)
             const int k1 = it.get_id(1);
 
             const int N = it.get_range(0);
-#if defined(DPCPP) 
-#pragma novector
-#else
-#pragma clang loop vectorize(disable)
-#endif
             for (size_t l = 0; l < 1024; l++)
             {
                 sum[k*N+k1] += 1;  
+                if (sum[k*N+k1] < 0)
+                {
+                    break;
+                    //sum[k*N+k1] = 0.0;
+                } 
             }
         });
     });
@@ -247,14 +249,14 @@ void kernel_parallel_2(sycl::queue &Q, TYPE* sum, sycl::range<2> global, sycl::r
             const int k1 = it.get_global_id(1);
 
             const int N = it.get_global_range(0);
-#if defined(DPCPP) 
-#pragma novector
-#else
-#pragma clang loop vectorize(disable)
-#endif
             for (size_t l = 0; l < 1024; l++)
             {
-                sum[k*N+k1] += 1;    
+                sum[k*N+k1] += 1;
+                if (sum[k*N+k1] < 0)
+                {
+                    break;
+                    //sum[k*N+k1] = 0.0;
+                }     
             }
         });
     });
@@ -272,14 +274,14 @@ void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
             const int k1 = it.get_id(1);
 
             const int N = it.get_range(0);
-#if defined(DPCPP) 
-#pragma novector
-#else
-#pragma clang loop vectorize(disable)
-#endif
             for (size_t l = 0; l < 1024; l++)
             {
-                sum_acc[k*N+k1] += 1;     
+                sum_acc[k*N+k1] += 1;   
+                if (sum_acc[k*N+k1] < 0)
+                {
+                    break;
+                    //sum_acc[k*N+k1] = 0.0;
+                }   
             }
         });
     });
@@ -297,14 +299,14 @@ void kernel_parallel_2(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::ran
             const int k1 = it.get_global_id(1);
 
             const int N = it.get_global_range(0);
-#if defined(DPCPP) 
-#pragma novector
-#else
-#pragma clang loop vectorize(disable)
-#endif
             for (size_t l = 0; l < 1024; l++)
             {
                 sum_acc[k*N+k1] += 1;
+                if (sum_acc[k*N+k1] < 0)
+                {
+                    break;
+                    //sum_acc[k*N+k1] = 0.0;
+                } 
             }        
         });
     });
@@ -323,6 +325,11 @@ void kernel_parallel_omp(int size, TYPE* sum)
         for (size_t l = 0; l < 1024; l++)
         {
             sum[j] += 1;
+            if (sum[j] < 0)
+            {
+                break;
+                //sum[j] = 0.0;
+            } 
         }
     };
     }
@@ -340,9 +347,14 @@ void kernel_parallel_omp_nested(int size, TYPE* sum)
             for (size_t l = 0; l < 1024; l++)
             {
                 sum[j*size+k] += 1;
+                if (sum[j*size+k] < 0)
+                {
+                    break;
+                    //sum[j*size+k] = 0.0;
+                } 
             }
         }
-    };
+    }
     
     }
 }

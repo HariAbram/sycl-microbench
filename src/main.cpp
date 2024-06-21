@@ -34,6 +34,7 @@ static struct option long_options[] = {
   {"ndrange", 0, NULL, 'n'},
   {"barrier", 0, NULL, 'w'},
   {"print-system", 0, NULL, 'p'},
+  {"delay", 0, NULL, 'd'},
   {"index_m", 1, NULL, 'i'},
   {"iterations", 1, NULL, 't'},
   {"help", 0, NULL, 'h'},
@@ -57,13 +58,14 @@ int main(int argc, char* argv[]) {
     bool barrier=false;
     bool print_system=false;
     bool help = false;
+    bool delay = false;
 
     int vec_no = 1;
 
     int iter = 10;
 
 
-    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:t:p:", 
+    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:t:p:d:", 
           long_options, &option_index)) != -1 ) {
     switch(opt){
       case 's':
@@ -95,6 +97,9 @@ int main(int argc, char* argv[]) {
         break;
       case 'p':
         print_system = true;
+        break;
+      case 'd':
+        delay = true;
         break;
       case 'i':
         vec_no = atoi(optarg);
@@ -376,6 +381,11 @@ int main(int argc, char* argv[]) {
       barrier_test_omp(n_row, true, iter);
 
     }
+    else if (delay)
+    {
+      delay_time(n_row);
+    }
+    
     else
     {
       fprintf(stderr, "No input parameters specified, use --help to see how to use this binary\n"); 

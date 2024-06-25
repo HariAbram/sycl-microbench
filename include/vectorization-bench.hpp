@@ -29,5 +29,8 @@ void triad(sycl::queue &Q, int size, int block_size);
 
 void outer_product(sycl::queue &Q, int size, int block_size);
 
+void cross_product(sycl::queue &Q, int size, int block_size);
+
+
 
 

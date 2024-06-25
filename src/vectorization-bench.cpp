@@ -542,7 +542,7 @@ void outer_product(sycl::queue &Q, int size, int block_size)
     free(v2);
 }
 
-////////////////////////////////////////////////////////// stencil
+////////////////////////////////////////////////////////// triad
 
 void triad(sycl::queue &Q, int size, int block_size)
 {
@@ -587,9 +587,72 @@ void triad(sycl::queue &Q, int size, int block_size)
 
     auto kernel_offload_time = time.duration();
     std::cout << "Time taken : triad with ndrange ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
-    
+
     free(v1);
     free(v2);
     free(v3);
 
+}
+
+////////////////////////////////////////////////////////// cross-product
+
+void cross_product(sycl::queue &Q, int size, int block_size)
+{
+
+    auto N = static_cast<size_t>(size);
+
+    auto N_b = static_cast<size_t>(block_size);
+
+    timer time;
+
+    TYPE * __restrict__ m1 = (TYPE *)malloc(size*size*sizeof(TYPE));
+    TYPE * __restrict__ v1 = (TYPE *)malloc(size*sizeof(TYPE));
+    TYPE * __restrict__ v2 = (TYPE *)malloc(size*sizeof(TYPE));
+
+    std::fill(m1,m1+size*size,0.0);
+    std::fill(v1,v1+size,1);
+    std::fill(v2,v2+size,1);
+
+    sycl::buffer<TYPE,1> m1_buff(m1,size*size);
+    sycl::buffer<TYPE,1> v1_buff(v1,size);
+    sycl::buffer<TYPE,1> v2_buff(v2,size);
+
+    sycl::range<2> global1 {N,N};
+    sycl::range<2> local1{N_b,N_b};
+
+    time.start_timer();
+ 
+    Q.submit([&](sycl::handler& cgh){
+        auto m1_acc = m1_buff.get_access<sycl::access::mode::read_write>(cgh);
+        auto v1_acc = v1_buff.get_access<sycl::access::mode::read>(cgh);
+        auto v2_acc = v2_buff.get_access<sycl::access::mode::read>(cgh);
+
+        cgh.parallel_for< >(sycl::nd_range<2>(global1,local1), [=](sycl::nd_item<2>it){
+
+            auto i = it.get_global_id(0);
+            auto j = it.get_global_id(1);
+            auto N = it.get_global_range(0);
+            auto tmp= std::pow(-1, i+j);
+
+            if (i == j)
+            {
+                m1_acc[i*N+j] = 0;
+            }
+            else
+            {
+                m1_acc[i*N+j] = v1_acc[i]*v2_acc[j]*tmp;
+            }
+            
+        });
+    });
+    Q.wait();
+
+    time.end_timer();
+
+    auto kernel_offload_time = time.duration();
+    std::cout << "Time taken : outer product with ndrange ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+
+    free(m1);
+    free(v1);
+    free(v2);
 }

@@ -40,6 +40,7 @@ static struct option long_options[] = {
   {"help", 0, NULL, 'h'},
   {"triad", 0, NULL, 'T'},
   {"outer-product", 0, NULL, 'O'},
+  {"cross-product", 0, NULL, 'C'},
   {0,0,0,0}
 };
 
@@ -63,12 +64,13 @@ int main(int argc, char* argv[]) {
     bool delay = false;
     bool tri = false;
     bool out_pro = false;
+    bool cro_pro = false;
 
     int vec_no = 1;
 
     int iter = 10;
 
-    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:I:p:d:T:O:", 
+    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:I:p:d:T:O:C:", 
           long_options, &option_index)) != -1 ) {
     switch(opt){
       case 's':
@@ -103,6 +105,9 @@ int main(int argc, char* argv[]) {
         break;
       case 'O':
         out_pro = true;
+        break;
+      case 'C':
+        cro_pro = true;
         break;
       case 'p':
         print_system = true;
@@ -213,6 +218,10 @@ int main(int argc, char* argv[]) {
     else if (out_pro)
     {
       outer_product(Q, n_row, block_size);
+    }
+    else if (cro_pro)
+    {
+      cross_product(Q, n_row, block_size);
     }
     else if (mem_alloc)
     {

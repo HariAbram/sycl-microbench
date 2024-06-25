@@ -253,7 +253,6 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
     
 }
 
-
 // reduction 
 
 void atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter)

@@ -36,8 +36,10 @@ static struct option long_options[] = {
   {"print-system", 0, NULL, 'p'},
   {"delay", 0, NULL, 'd'},
   {"index_m", 1, NULL, 'i'},
-  {"iterations", 1, NULL, 't'},
+  {"iterations", 1, NULL, 'I'},
   {"help", 0, NULL, 'h'},
+  {"triad", 0, NULL, 'T'},
+  {"outer-product", 0, NULL, 'O'},
   {0,0,0,0}
 };
 
@@ -59,13 +61,14 @@ int main(int argc, char* argv[]) {
     bool print_system=false;
     bool help = false;
     bool delay = false;
+    bool tri = false;
+    bool out_pro = false;
 
     int vec_no = 1;
 
     int iter = 10;
 
-
-    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:t:p:d:", 
+    while ((opt = getopt_long(argc, argv, ":s:b:v:i:h:m:r:a:e:n:w:I:p:d:T:O:", 
           long_options, &option_index)) != -1 ) {
     switch(opt){
       case 's':
@@ -95,6 +98,12 @@ int main(int argc, char* argv[]) {
       case 'w':
         barrier = true;
         break;
+      case 'T':
+        tri = true;
+        break;
+      case 'O':
+        out_pro = true;
+        break;
       case 'p':
         print_system = true;
         break;
@@ -104,7 +113,7 @@ int main(int argc, char* argv[]) {
       case 'i':
         vec_no = atoi(optarg);
         break;
-      case 't':
+      case 'I':
         iter = atoi(optarg);
         break;
       case 'h':
@@ -134,7 +143,8 @@ int main(int argc, char* argv[]) {
       std::cout<<"Usage: \n"<< argv[0]<< " [-s size |-b blocksize <optional> |-t No. iterations | --print-system\n"
                                         " --mat-mul : to run matrix multiplication \n" 
                                         " --mat-vec : to run matrix vector multiplication \n"
-                                        "             can run only mat-mul or vec-add at a time, can't run both simultaneously \n"
+                                        " --triad   : to run a triad operation \n"
+                                        " --outer-product   : to run a outer product operation \n"
                                         " --mem-alloc : to alloc memory using SYCL and standard malloc \n"
                                         " --reduction : to test reduction using atomics and sycl reduction construct\n"
                                         " --range : to test sycl range construct\n"
@@ -149,8 +159,6 @@ int main(int argc, char* argv[]) {
       exit(EXIT_FAILURE);
     }
     
-
-    
     sycl::queue Q{};
 
     if (print_system)
@@ -158,9 +166,6 @@ int main(int argc, char* argv[]) {
       std::cout << "running on ..."<< std::endl;
       std::cout << Q.get_device().get_info<sycl::info::device::name>()<<"\n"<<std::endl;
     }
-    
-    
-    
 
     if (mat_mul)
     {
@@ -200,7 +205,14 @@ int main(int argc, char* argv[]) {
       {
         mat_vec_ndrange_buff_acc(Q, n_row, block_size);
       }
-
+    }
+    else if (tri)
+    {
+      triad(Q, n_row, block_size);
+    }
+    else if (out_pro)
+    {
+      outer_product(Q, n_row, block_size);
     }
     else if (mem_alloc)
     {

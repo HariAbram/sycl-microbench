@@ -41,6 +41,8 @@ bool verification (TYPE *m1, TYPE *m2 , TYPE *m3, int size)
 
 }
 
+////////////////////////////////////////////////////////// mat-vec
+
 
 void mat_vec_range_usm(sycl::queue &Q, int size)
 {
@@ -77,7 +79,7 @@ void mat_vec_range_usm(sycl::queue &Q, int size)
     time.end_timer();
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Time taken for mat vec for range with USM "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    std::cout << "Time taken : mat vec with range ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     sycl::free(v1,Q);
     sycl::free(v2,Q);
@@ -128,7 +130,7 @@ void mat_vec_range_buff_acc(sycl::queue &Q, int size)
     Q.wait();
     time.end_timer();
     auto kernel_offload_time = time.duration();
-    std::cout << "Time taken for mat vec for range with BA "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    std::cout << "Time taken : mat vec with range ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     free(v1);
     free(v2);
@@ -155,11 +157,6 @@ void mat_vec_ndrange_usm(sycl::queue &Q, int size, int block_size)
     sycl::range<1> global{N};
 
     auto N_b = static_cast<size_t>(block_size);
-    if (block_size > size)
-    {
-        std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
-        N_b = N;
-    }
     sycl::range<1> local{N_b};
     time.start_timer();
 
@@ -180,7 +177,7 @@ void mat_vec_ndrange_usm(sycl::queue &Q, int size, int block_size)
     time.end_timer();
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Time taken for mat vec for ndrange with USM "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    std::cout << "Time taken : mat vec with ndrange ( USM ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     sycl::free(v1,Q);
     sycl::free(v2,Q);
@@ -209,11 +206,6 @@ void mat_vec_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
     sycl::range<1> global{N};
 
     auto N_b = static_cast<size_t>(block_size);
-    if (block_size > size)
-    {
-        std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
-        N_b = N;
-    }
     sycl::range<1> local{N_b};
     time.start_timer();
     
@@ -238,7 +230,7 @@ void mat_vec_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
     time.end_timer();
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Time taken for mat vec for range with BA "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    std::cout << "Time taken : mat vec with range ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     free(v1);
     free(v2);
@@ -292,7 +284,7 @@ void mat_mul_range_usm(sycl::queue &Q, int size)
     }
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Time taken for mat mul for range with USM "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    std::cout << "Time taken : mat mul with range ( USM ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     sycl::free(m1,Q);
     sycl::free(m2,Q);
@@ -359,7 +351,7 @@ void mat_mul_range_buff_acc(sycl::queue &Q, int size)
     
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Time taken for mat mul for range with buff and acc "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    std::cout << "Time taken : mat mul with range ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     free(m1);
     free(m2);
@@ -372,11 +364,6 @@ void mat_mul_ndrange_usm(sycl::queue &Q, int size, int block_size)
     auto N = static_cast<size_t>(size);
 
     auto N_b = static_cast<size_t>(block_size);
-    if (block_size > size)
-    {
-        std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
-        N_b = N;
-    }
     sycl::range<1> local{N_b};
 
     timer time;
@@ -423,7 +410,7 @@ void mat_mul_ndrange_usm(sycl::queue &Q, int size, int block_size)
     }
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Time taken for mat mul for nd_range with USM  "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    std::cout << "Time taken : mat mul with nd_range ( USM ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     sycl::free(m1,Q);
     sycl::free(m2,Q);
@@ -436,11 +423,6 @@ void mat_mul_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
     auto N = static_cast<size_t>(size);
 
     auto N_b = static_cast<size_t>(block_size);
-    if (block_size > size)
-    {
-        std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
-        N_b = N;
-    }
     sycl::range<1> local{N_b};
 
     timer time;
@@ -498,10 +480,116 @@ void mat_mul_ndrange_buff_acc(sycl::queue &Q, int size, int block_size)
     
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Time taken for mat mul for nd_range with buff and acc  "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    std::cout << "Time taken : mat mul with nd_range( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     free(m1);
     free(m2);
     free(m3);
+
+}
+
+////////////////////////////////////////////////////////// outer-product
+
+void outer_product(sycl::queue &Q, int size, int block_size)
+{
+
+    auto N = static_cast<size_t>(size);
+
+    auto N_b = static_cast<size_t>(block_size);
+
+    timer time;
+
+    TYPE * __restrict__ m1 = (TYPE *)malloc(size*size*sizeof(TYPE));
+    TYPE * __restrict__ v1 = (TYPE *)malloc(size*sizeof(TYPE));
+    TYPE * __restrict__ v2 = (TYPE *)malloc(size*sizeof(TYPE));
+
+    std::fill(m1,m1+size*size,0.0);
+    std::fill(v1,v1+size,1);
+    std::fill(v2,v2+size,1);
+
+    sycl::buffer<TYPE,1> m1_buff(m1,size*size);
+    sycl::buffer<TYPE,1> v1_buff(v1,size);
+    sycl::buffer<TYPE,1> v2_buff(v2,size);
+
+    sycl::range<2> global1 {N,N};
+    sycl::range<2> local1{N_b,N_b};
+
+    time.start_timer();
+ 
+    Q.submit([&](sycl::handler& cgh){
+        auto m1_acc = m1_buff.get_access<sycl::access::mode::read_write>(cgh);
+        auto v1_acc = v1_buff.get_access<sycl::access::mode::read>(cgh);
+        auto v2_acc = v2_buff.get_access<sycl::access::mode::read>(cgh);
+
+        cgh.parallel_for< >(sycl::nd_range<2>(global1,local1), [=](sycl::nd_item<2>it){
+
+            auto i = it.get_global_id(0);
+            auto j = it.get_global_id(1);
+            auto N = it.get_global_range(0);
+
+            m1_acc[i*N+j] = v1_acc[i]*v2_acc[j];
+        });
+    });
+    Q.wait();
+
+    time.end_timer();
+
+    auto kernel_offload_time = time.duration();
+    std::cout << "Time taken : outer product with ndrange ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+
+    free(m1);
+    free(v1);
+    free(v2);
+}
+
+////////////////////////////////////////////////////////// stencil
+
+void triad(sycl::queue &Q, int size, int block_size)
+{
+    auto N = static_cast<size_t>(size);
+
+    auto N_b = static_cast<size_t>(block_size);
+
+    timer time;
+
+    TYPE * __restrict__ v1 = (TYPE *)malloc(size*sizeof(TYPE)); 
+    TYPE * __restrict__ v2 = (TYPE *)malloc(size*sizeof(TYPE)); 
+    TYPE * __restrict__ v3 = (TYPE *)malloc(size*sizeof(TYPE)); 
+
+    std::fill(v1,v1+size,1.0);
+    std::fill(v2,v2+size,2.0);
+    std::fill(v3,v3+size,0.0);
+
+    sycl::range<1> global1{N};
+    sycl::range<1> local1{N_b};
+
+    sycl::buffer<TYPE,1> v1_buff(v1,size);
+    sycl::buffer<TYPE,1> v2_buff(v2,size);
+    sycl::buffer<TYPE,1> v3_buff(v3,size);
+
+    time.start_timer();
+
+    Q.submit([&](sycl::handler& cgh){
+        auto v1_acc = v1_buff.get_access<sycl::access::mode::read>(cgh);
+        auto v2_acc = v2_buff.get_access<sycl::access::mode::read>(cgh);
+        auto v3_acc = v3_buff.get_access<sycl::access::mode::read_write>(cgh);
+
+        cgh.parallel_for< >(sycl::nd_range<1>(global1,local1), [=](sycl::nd_item<1>it){
+
+            auto i = it.get_global_id(0);
+
+            v3_acc[i]  = v2_acc[i] + v1_acc[i]* N;
+        });
+    });
+    Q.wait();
+
+    time.end_timer();
+
+    auto kernel_offload_time = time.duration();
+    std::cout << "Time taken : triad with ndrange ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    
+    free(v1);
+    free(v2);
+    free(v3);
 
 }

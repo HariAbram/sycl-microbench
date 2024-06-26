@@ -650,7 +650,7 @@ void cross_product(sycl::queue &Q, int size, int block_size)
     time.end_timer();
 
     auto kernel_offload_time = time.duration();
-    std::cout << "Time taken : outer product with ndrange ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
+    std::cout << "Time taken : cross product with ndrange ( buff and acc ) "<< kernel_offload_time/(1E9) << " seconds\n" << std::endl;
 
     free(m1);
     free(v1);

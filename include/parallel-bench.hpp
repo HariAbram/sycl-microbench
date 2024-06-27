@@ -44,13 +44,13 @@ void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, in
 
 // barriers
 
-void group_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter);
+void group_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter, int dim);
 
-void group_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter);
+void group_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter, int dim);
 
-void subgroup_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter);
+void subgroup_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter, int dim);
 
-void subgroup_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter);
+void subgroup_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter, int dim);
 
 
 

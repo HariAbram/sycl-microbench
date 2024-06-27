@@ -381,21 +381,37 @@ int main(int argc, char* argv[]) {
           << std::endl
           << std::fixed;
 
-      group_barrier_test_usm(Q, n_row, block_size, false, 3);
+      group_barrier_test_usm(Q, n_row, block_size, false, 3, 1);
 
-      group_barrier_test_usm(Q, n_row, block_size, true, iter);
+      group_barrier_test_usm(Q, n_row, block_size, true, iter, 1);
 
-      group_barrier_test_buff_acc(Q, n_row,  block_size, false, 3);
+      group_barrier_test_usm(Q, n_row, block_size, false, 3, 2);
 
-      group_barrier_test_buff_acc(Q, n_row,  block_size, true, iter);
+      group_barrier_test_usm(Q, n_row, block_size, true, iter, 2);
 
-      subgroup_barrier_test_usm(Q, n_row, block_size, false, 3);
+      group_barrier_test_buff_acc(Q, n_row,  block_size, false, 3, 1);
 
-      subgroup_barrier_test_usm(Q, n_row, block_size, true, iter);
+      group_barrier_test_buff_acc(Q, n_row,  block_size, true, iter, 1);
 
-      subgroup_barrier_test_buff_acc(Q, n_row, block_size, false, 3);
+      group_barrier_test_buff_acc(Q, n_row,  block_size, false, 3, 2);
 
-      subgroup_barrier_test_buff_acc(Q, n_row, block_size, true, iter);
+      group_barrier_test_buff_acc(Q, n_row,  block_size, true, iter, 2);
+
+      subgroup_barrier_test_usm(Q, n_row, block_size, false, 3, 1);
+
+      subgroup_barrier_test_usm(Q, n_row, block_size, true, iter, 1);
+
+      subgroup_barrier_test_usm(Q, n_row, block_size, false, 3, 2);
+
+      subgroup_barrier_test_usm(Q, n_row, block_size, true, iter, 2);
+
+      subgroup_barrier_test_buff_acc(Q, n_row, block_size, false, 3, 1);
+
+      subgroup_barrier_test_buff_acc(Q, n_row, block_size, true, iter, 1);
+
+      subgroup_barrier_test_buff_acc(Q, n_row, block_size, false, 3, 2);
+
+      subgroup_barrier_test_buff_acc(Q, n_row, block_size, true, iter, 2);
 
       barrier_test_omp(n_row, false, 3);
 

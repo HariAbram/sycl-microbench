@@ -104,7 +104,7 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
 
         if (print)
         {
-            print_results(timings, iter, size, "range_BA", 1, 2);
+            print_results(timings, iter, size, "range_BA", dim, 2);
         }        
     }
     else if (dim == 2)
@@ -135,7 +135,7 @@ void range_with_buff_acc(sycl::queue &Q, int size, int dim, bool print, int iter
 
         if (print)
         {
-            print_results(timings, iter, size, "range_BA", 2, 2);
+            print_results(timings, iter, size, "range_BA", dim, 2);
         }
     } 
     else
@@ -160,6 +160,12 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
     std::fill(sum,sum+(size*size),0.0);
    
     auto N = static_cast<size_t>(size);
+    auto N_b = static_cast<size_t>(block_size);
+    if (block_size > size)
+    {
+        std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
+        N_b = N;
+    }
 
     sycl::range<1> global{N};    
 
@@ -169,14 +175,7 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
     {
         sycl::range<1> global{N*N};
         int i;
-
-        auto N_b = static_cast<size_t>(block_size);
-        if (block_size > size)
-        {
-            std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
-            N_b = N;
-        }
-        sycl::range<1> local{N_b};
+        sycl::range<1> local{N_b*N_b};
 
         sycl::buffer<TYPE , 1> sum_buff(sum,size*size);        
 
@@ -202,20 +201,13 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
         if (print)
         {
-            print_results(timings, iter, size, "ndrange_BA", 1, 2);
+            print_results(timings, iter, size, "ndrange_BA", dim, 2);
         }
     }
     else if (dim == 2)
     {
         sycl::range<2> global{N,N};
         int i;
-
-        auto N_b = static_cast<size_t>(block_size);
-        if (block_size > size)
-        {
-            std::cout << "Given input block size is greater than the global size changing block size to global size \n" << std::endl;
-            N_b = N;
-        }
         sycl::range<2> local{N_b,N_b};
 
         sycl::buffer<TYPE , 1> sum_buff(sum,size*size);
@@ -241,7 +233,7 @@ void nd_range_with_buff_acc(sycl::queue &Q, int size, int block_size ,int dim, b
 
         if (print)
         {
-            print_results(timings, iter, size, "ndrange_BA", 2, 2);
+            print_results(timings, iter, size, "ndrange_BA", dim, 2);
         }
     }
     else
@@ -351,111 +343,169 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
 }
 
 
-void group_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
+void group_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter, int dim)
 {
 
     timer time;
 
-    size = size*size;
+    TYPE * sum = (TYPE *)malloc(size*size*sizeof(TYPE)); 
 
-    TYPE * sum = (TYPE *)malloc(size*sizeof(TYPE)); 
+    std::fill(sum,sum+(size*size),0);
+    sycl::buffer<TYPE , 1> sum_buff(sum,size*size);
 
-    std::fill(sum,sum+(size),0);
-
-    
     auto N = static_cast<size_t>(size);
-    sycl::range<1> global{N};
+    
     auto N_b = static_cast<size_t>(block_size);
     if (block_size > size)
     {
         std::cout << "Given input block size is greater than the matrix size change block size to matrix size \n" << std::endl;
         N_b = N;
     }
-    sycl::range<1> local{N_b};
-
-    sycl::buffer<TYPE , 1> sum_buff(sum,size);
-
-    int i;
-
     auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < iter; i++)
+    if (dim == 1)
     {
-        time.start_timer();
-        kernel_group_barrier(Q, sum_buff, global, local);
-        time.end_timer();
+        sycl::range<1> global{N*N};
+        sycl::range<1> local{N_b*N_b};
 
-        timings[i] = time.duration();
+        int i;
+        for ( i = 0; i < iter; i++)
+        {
+            time.start_timer();
+            kernel_group_barrier(Q, sum_buff, global, local);
+            time.end_timer();
+
+            timings[i] = time.duration();
+        }
+        auto sum_r = sum_buff.get_host_access();
+
+        if (sum_r[0]!= 1024*iter)
+        {
+            std::cout << "Verification failed "
+                    << "Expected value "<< 1024*iter
+                    << "Final value"<< sum_r[0]
+                    <<std::endl;
+        }
+        if (print)
+        {
+            print_results(timings, iter, size, "Group barrier BA", dim, 4);
+        }
+        free(sum);
     }
-
-    auto sum_r = sum_buff.get_host_access();
-
-    if (sum_r[0]!= 1024*iter)
+    else if (dim == 2)
     {
-        std::cout << "Verification failed "
-                  << "Expected value "<< 1024*iter
-                  << "Final value"<< sum_r[0]
-                  <<std::endl;
-    }
+        sycl::range<2> global{N,N};
+        sycl::range<2> local{N_b,N_b};
 
-    if (print)
+        int i;
+        for ( i = 0; i < iter; i++)
+        {
+            time.start_timer();
+            kernel_group_barrier(Q, sum_buff, global, local);
+            time.end_timer();
+
+            timings[i] = time.duration();
+        }
+        auto sum_r = sum_buff.get_host_access();
+
+        if (sum_r[0]!= 1024*iter)
+        {
+            std::cout << "Verification failed "
+                    << "Expected value "<< 1024*iter
+                    << "Final value"<< sum_r[0]
+                    <<std::endl;
+        }
+        if (print)
+        {
+            print_results(timings, iter, size, "Group barrier BA", dim, 4);
+        }
+        free(sum);
+    }
+    else
     {
-        print_results(timings, iter, size, "Group barrier BA", 1, 4);
-    }
+        std::cout << "ERROR: the dimension input should be 1 or 2 " << std::endl;
+    }     
 
-    free(sum);
 }
 
-void subgroup_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
+void subgroup_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter, int dim)
 {
 
     timer time;
 
-    size = size*size;
+    TYPE * sum = (TYPE *)malloc(size*size*sizeof(TYPE)); 
 
-    TYPE * sum = (TYPE *)malloc(size*sizeof(TYPE)); 
-
-    std::fill(sum,sum+(size),0);
+    std::fill(sum,sum+(size*size),0);
+    sycl::buffer<TYPE , 1> sum_buff(sum,size*size);
     
     auto N = static_cast<size_t>(size);
-    sycl::range<1> global{N};
+    
     auto N_b = static_cast<size_t>(block_size);
     if (block_size > size)
     {
         std::cout << "Given input block size is greater than the matrix size change block size to matrix size \n" << std::endl;
         N_b = N;
     }
-    sycl::range<1> local{N_b};
-
-    sycl::buffer<TYPE , 1> sum_buff(sum,size);
-
-    int i;
-
     auto timings = (double*)std::malloc(sizeof(double)*iter);
 
-    for ( i = 0; i < iter; i++)
+    if (dim == 1)
     {
-        time.start_timer();
-        kernel_subgroup_barrier(Q, sum_buff,global, local);
-        time.end_timer();
+        sycl::range<1> global{N*N};
+        sycl::range<1> local{N_b*N_b};
+        int i;
+        for ( i = 0; i < iter; i++)
+        {
+            time.start_timer();
+            kernel_subgroup_barrier(Q, sum_buff,global, local);
+            time.end_timer();
 
-        timings[i] = time.duration();
+            timings[i] = time.duration();
+        }
+        auto sum_r = sum_buff.get_host_access();
+
+        if (sum_r[0]!= 1024*iter)
+        {
+            std::cout << "Verification failed "
+                    << "Expected value "<< 1024*iter
+                    << "Final value"<< sum_r[0]
+                    << std::endl;
+        }
+        if (print)
+        {
+            print_results(timings, iter, size, "Subgroup barrier BA", dim, 4);
+        }
+        free(sum);
     }
-
-    auto sum_r = sum_buff.get_host_access();
-
-    if (sum_r[0]!= 1024*iter)
+    else if (dim == 2)
     {
-        std::cout << "Verification failed "
-                << "Expected value "<< 1024*iter
-                << "Final value"<< sum_r[0]
-                << std::endl;
-    }
+        sycl::range<2> global{N,N};
+        sycl::range<2> local{N_b,N_b};
+        int i;
+        for ( i = 0; i < iter; i++)
+        {
+            time.start_timer();
+            kernel_subgroup_barrier(Q, sum_buff,global, local);
+            time.end_timer();
 
-    if (print)
-    {
-        print_results(timings, iter, size, "Subgroup barrier BA", 1, 4);
+            timings[i] = time.duration();
+        }
+        auto sum_r = sum_buff.get_host_access();
+
+        if (sum_r[0]!= 1024*iter)
+        {
+            std::cout << "Verification failed "
+                    << "Expected value "<< 1024*iter
+                    << "Final value"<< sum_r[0]
+                    << std::endl;
+        }
+        if (print)
+        {
+            print_results(timings, iter, size, "Subgroup barrier BA", dim, 4);
+        }
+        free(sum);
     }
-    
-    free(sum);
+    else
+    {
+        std::cout << "ERROR: the dimension input should be 1 or 2 " << std::endl;
+    }
 }

@@ -82,11 +82,19 @@ void kernel_reduction(int size, TYPE &sum, TYPE* m);
 
 void kernel_group_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local);
 
+void kernel_group_barrier(sycl::queue &Q, TYPE* sum, sycl::range<2> global, sycl::range<2> local);
+
 void kernel_group_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local);
+
+void kernel_group_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<2> global, sycl::range<2> local);
 
 void kernel_subgroup_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local);
 
+void kernel_subgroup_barrier(sycl::queue &Q, TYPE* sum, sycl::range<2> global, sycl::range<2> local);
+
 void kernel_subgroup_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local);
+
+void kernel_subgroup_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<2> global, sycl::range<2> local);
 
 void kernel_barrier_omp(int size, TYPE* sum);
 

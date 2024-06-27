@@ -484,9 +484,6 @@ void kernel_group_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl
                 } 
                 sum[k]+= 1;
             }
-
-            
-
         });
     });
     Q.wait();   
@@ -510,8 +507,6 @@ void kernel_group_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::r
                 } 
                 sum_acc[k]+= 1;
             }
-
-            
         });
     });
     Q.wait();
@@ -533,9 +528,6 @@ void kernel_subgroup_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, s
                 } 
                 sum[k]+= 1;
             }
-
-            
-
         });
     });
     Q.wait();   
@@ -578,10 +570,8 @@ void kernel_barrier_omp(int size, TYPE* sum)
                     break;
                 } 
                 sum[j] += 1;
-            } 
-                    
+            }       
         };
-
         #pragma omp barrier
     }
 }

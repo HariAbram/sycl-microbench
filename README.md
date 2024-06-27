@@ -13,28 +13,27 @@ This is a micro-benchmark for testing the overhead of SYCL features, the followi
 CMake is used to build this benchmark. 
 
 ```
-make acpp|intel-llvm|
+make VENDOR=acpp|intel-llvm|<empty=DPCPP>
 ```
-if `HIPSYCL` is chosen as a SYCL implementation then `-DHIPSYCL_INSTALL_DIR` need to be specified. 
+Depending on the Implementation choosen, paths to all the the binaries and libraries should be added to the standard environment variables, such as $PATH and $LD_LIBRARY_PATH
 
-For optimal performance `OMP_PROC_BIND` environment variable is set to true. 
+For optimal performance set `OMP_PROC_BIND` environment variable is set to true. 
 
 ### Example
 
 ```
-./binary " [-s size |-b blocksize <optional>| -t No. iterations\n
-   	 --mat-mul : to run matrix multiplication \n
-	 --vec-add : to run vector addition \n
-	   can run only mat-mul or vec-add at a time, can't run both simultaneously \n
-	 --mem-alloc : to alloc memory using SYCL and standard malloc \n
+./binary " [-s size |-b blocksize <optional>| -t No. iterations
+   	 --mat-mul : to run matrix multiplication 
+	 --vec-add : to run vector addition 
+	 --mem-alloc : to alloc memory using SYCL and standard malloc 
 	 --reduction : to test reduction using atomics and sycl reduction construct
 	 --range : to test sycl range construct
 	 --ndrange : to test sycl nd_range construct
-	 -i : for different routines in vectorization benchmark\n
-	       1 - range with USM\n
-	       2 - range with Buffer and Accessors\n
-	       3 - nd_range with USM\n
-	       4 - nd_range with Buffer and Accessor\n
+	 -i : for different routines in vectorization benchmark
+	       1 - range with USM
+	       2 - range with Buffer and Accessors
+	       3 - nd_range with USM
+	       4 - nd_range with Buffer and Accessor
    
 ```
 

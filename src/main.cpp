@@ -145,7 +145,7 @@ int main(int argc, char* argv[]) {
     if (help)
     {
 
-      std::cout<<"Usage: \n"<< argv[0]<< " [-s size |-b blocksize <optional> |-t No. iterations | --print-system\n"
+      std::cout<<"Usage: \n"<< argv[0]<< " [-s size |-b blocksize <optional> |-I No. iterations | --print-system\n"
                                         " --mat-mul : to run matrix multiplication \n" 
                                         " --mat-vec : to run matrix vector multiplication \n"
                                         " --triad   : to run a triad operation \n"

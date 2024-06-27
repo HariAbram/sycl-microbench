@@ -42,7 +42,7 @@ obj = $(source:.cpp=.o)
 #===============================================================================
 
 # Standard Flags
-CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=float
+CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=double
 
 # Debug Flags
 ifeq ($(DEBUG),yes)
@@ -66,7 +66,7 @@ endif
 ifeq ($(ARCH), a64fx)
 CXXFLAGS += -mcpu=a64fx+sve
 else ifeq ($(ARCH), x86)
-CXXFLAGS += -march=sapphirerapids
+CXXFLAGS += -march=native
 endif
 
 

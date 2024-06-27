@@ -334,9 +334,7 @@ void mat_mul_range_buff_acc(sycl::queue &Q, int size)
             }
 
             m3_acc[i*N+j] = temp;
-
         });
-
     });
     Q.wait();
     
@@ -521,7 +519,7 @@ void outer_product(sycl::queue &Q, int size, int block_size)
         auto v1_acc = v1_buff.get_access<sycl::access::mode::read>(cgh);
         auto v2_acc = v2_buff.get_access<sycl::access::mode::read>(cgh);
 
-        cgh.parallel_for< >(sycl::nd_range<2>(global1,local1), [=](sycl::nd_item<2>it){
+        cgh.parallel_for<>(sycl::nd_range<2>(global1,local1), [=](sycl::nd_item<2>it){
 
             auto i = it.get_global_id(0);
             auto j = it.get_global_id(1);

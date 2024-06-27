@@ -351,7 +351,7 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
 }
 
 
-void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
+void group_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
 
     timer time;
@@ -382,7 +382,7 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
     for ( i = 0; i < iter; i++)
     {
         time.start_timer();
-        kernel_global_barrier(Q, sum_buff, global, local);
+        kernel_group_barrier(Q, sum_buff, global, local);
         time.end_timer();
 
         timings[i] = time.duration();
@@ -400,13 +400,13 @@ void global_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool
 
     if (print)
     {
-        print_results(timings, iter, size, "G barrier BA", 1, 4);
+        print_results(timings, iter, size, "Group barrier BA", 1, 4);
     }
 
     free(sum);
 }
 
-void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
+void subgroup_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
 
     timer time;
@@ -436,7 +436,7 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool 
     for ( i = 0; i < iter; i++)
     {
         time.start_timer();
-        kernel_local_barrier(Q, sum_buff,global, local);
+        kernel_subgroup_barrier(Q, sum_buff,global, local);
         time.end_timer();
 
         timings[i] = time.duration();
@@ -454,7 +454,7 @@ void local_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool 
 
     if (print)
     {
-        print_results(timings, iter, size, "L barrier BA", 1, 4);
+        print_results(timings, iter, size, "Subgroup barrier BA", 1, 4);
     }
     
     free(sum);

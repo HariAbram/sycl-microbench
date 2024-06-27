@@ -381,21 +381,21 @@ int main(int argc, char* argv[]) {
           << std::endl
           << std::fixed;
 
-      global_barrier_test_usm(Q, n_row, block_size, false, 3);
+      group_barrier_test_usm(Q, n_row, block_size, false, 3);
 
-      global_barrier_test_usm(Q, n_row, block_size, true, iter);
+      group_barrier_test_usm(Q, n_row, block_size, true, iter);
 
-      global_barrier_test_buff_acc(Q, n_row,  block_size, false, 3);
+      group_barrier_test_buff_acc(Q, n_row,  block_size, false, 3);
 
-      global_barrier_test_buff_acc(Q, n_row,  block_size, true, iter);
+      group_barrier_test_buff_acc(Q, n_row,  block_size, true, iter);
 
-      local_barrier_test_usm(Q, n_row, block_size, false, 3);
+      subgroup_barrier_test_usm(Q, n_row, block_size, false, 3);
 
-      local_barrier_test_usm(Q, n_row, block_size, true, iter);
+      subgroup_barrier_test_usm(Q, n_row, block_size, true, iter);
 
-      local_barrier_test_buff_acc(Q, n_row, block_size, false, 3);
+      subgroup_barrier_test_buff_acc(Q, n_row, block_size, false, 3);
 
-      local_barrier_test_buff_acc(Q, n_row, block_size, true, iter);
+      subgroup_barrier_test_buff_acc(Q, n_row, block_size, true, iter);
 
       barrier_test_omp(n_row, false, 3);
 

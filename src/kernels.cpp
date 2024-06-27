@@ -468,15 +468,13 @@ void kernel_reduction(int size, TYPE &sum, TYPE* m)
 /////////////////////////////////////////////// Barriers 
 
 
-void kernel_global_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local)
+void kernel_group_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local)
 {
     Q.submit([&](sycl::handler& cgh){
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
-            it.barrier();
+            sycl::group_barrier(it.get_group());
 
             const int k = it.get_global_id(0);
-
-            const int e = it.get_local_id(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -494,17 +492,15 @@ void kernel_global_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, syc
     Q.wait();   
 }
 
-void kernel_global_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local)
+void kernel_group_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local)
 {
     Q.submit([&](sycl::handler& cgh){
         auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
 
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1>it){
-            it.barrier();
+            sycl::group_barrier(it.get_group());
 
             const int k = it.get_global_id(0);
-
-            const int e = it.get_local_id(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -521,15 +517,13 @@ void kernel_global_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::
     Q.wait();
 }
 
-void kernel_local_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local)
+void kernel_subgroup_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl::range<1> local)
 {
     Q.submit([&](sycl::handler& cgh){
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1> it){
-            it.barrier(sycl::access::fence_space::local_space);
+            sycl::group_barrier(it.get_sub_group());
 
             const int k = it.get_global_id(0);
-
-            const int e = it.get_local_id(0);
 
             for (size_t l = 0; l < 1024; l++)
             {
@@ -547,17 +541,15 @@ void kernel_local_barrier(sycl::queue &Q, TYPE* sum, sycl::range<1> global, sycl
     Q.wait();   
 }
 
-void kernel_local_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local)
+void kernel_subgroup_barrier(sycl::queue &Q, sycl::buffer<TYPE,1> sum_buff, sycl::range<1> global, sycl::range<1> local)
 {
     Q.submit([&](sycl::handler& cgh){
         auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
 
         cgh.parallel_for<>(sycl::nd_range<1>(global,local), [=](sycl::nd_item<1> it){
-            it.barrier(sycl::access::fence_space::local_space);
+            sycl::group_barrier(it.get_sub_group());
 
             const int k = it.get_global_id(0);
-
-            const int e = it.get_local_id(0);
 
             for (size_t l = 0; l < 1024; l++)
             {

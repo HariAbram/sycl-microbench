@@ -22,7 +22,7 @@ For optimal performance set `OMP_PROC_BIND` environment variable is set to true.
 ### Example
 
 ```
-./binary " [-s size |-b blocksize <optional>| -t No. iterations
+./binary  -s size |-b blocksize <optional>| -t No. iterations
    	 --mat-mul : to run matrix multiplication 
 	 --vec-add : to run vector addition 
 	 --mem-alloc : to alloc memory using SYCL and standard malloc 

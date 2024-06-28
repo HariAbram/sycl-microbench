@@ -96,6 +96,8 @@ LDFLAGS =
 # Targets to Build
 #===============================================================================
 
+all: clean $(program)
+
 $(program): $(obj)
 	$(CXX) $(CXXFLAGS) $(obj) -o $@ $(LDFLAGS)
 

@@ -7,16 +7,16 @@ BACKEND    = omp
 endif
 
 ifndef TYPE
-TYPE    = double
+TYPE       = double
 endif
 
 # Compiler can be set below, or via environment variable
 ifeq ($(VENDOR), acpp)
-  CXX        = acpp
+  CXX       = acpp
 else ifeq ($(VENDOR), intel-llvm)
   CXX       = clang++
 else 
-  CXX	  = icpx 
+  CXX	      = icpx 
 endif
 
 OPTIMIZE  = yes

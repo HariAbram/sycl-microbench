@@ -521,6 +521,7 @@ void atomics_usm(sycl::queue &Q, int size, bool print, int iter)
     free(timings);
 }
 
+#if defined (ACPP) && (OMP)
 
 void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
@@ -559,6 +560,7 @@ void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, in
     sycl::free(sum,Q);
 }
 
+#endif
 
 void group_barrier_test_usm(sycl::queue &Q, int size, int block_size, bool print, int iter, int dim)
 {

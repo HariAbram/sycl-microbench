@@ -2,13 +2,21 @@
 # User Options
 #===============================================================================
 
+ifndef BACKEND
+BACKEND    = omp
+endif
+
+ifndef TYPE
+TYPE    = double
+endif
+
 # Compiler can be set below, or via environment variable
 ifeq ($(VENDOR), acpp)
-CXX        = acpp
+  CXX        = acpp
 else ifeq ($(VENDOR), intel-llvm)
-CXX       = clang++
+  CXX       = clang++
 else 
-CXX	  = icpx 
+  CXX	  = icpx 
 endif
 
 OPTIMIZE  = yes
@@ -19,11 +27,15 @@ DEBUG     = no
 #===============================================================================
 
 ifeq ($(VENDOR), acpp)
-program = bin/main-acpp
+  ifeq ($(BACKEND), omp)
+    program = bin/main-acpp-omp
+  else ifeq ($(BACKEND), ocl)
+    program = bin/main-acpp-ocl
+  endif
 else ifeq ($(VENDOR), intel-llvm)
-program = bin/main-intel-llvm
+  program = bin/main-intel-llvm
 else 
-program = bin/main-dpcpp
+  program = bin/main-dpcpp
 endif
 
 source = src/main.cpp\
@@ -42,7 +54,7 @@ obj = $(source:.cpp=.o)
 #===============================================================================
 
 # Standard Flags
-CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=double
+CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=TYPE
 
 # Debug Flags
 ifeq ($(DEBUG),yes)
@@ -56,17 +68,22 @@ ifeq ($(OPTIMIZE),yes)
 endif
 
 ifeq ($(VENDOR), acpp)
-CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp --acpp-targets=omp.accelerated -DACPP 
+  CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp -DACPP
+  ifeq ($(BACKEND), omp)
+    CXXFLAGS += -DOMP --acpp-targets=omp.accelerated
+  else ifeq ($(BACKEND), ocl)
+    CXXFLAGS += -DOCL --acpp-targets=generic
+  endif
 else ifeq ($(VENDOR), intel-llvm)
-CXXFLAGS += -fsycl -fopenmp 
+  CXXFLAGS += -fsycl -fopenmp 
 else 
-CXXFLAGS += -fsycl -qopenmp -DDPCPP 
+  CXXFLAGS += -fsycl -qopenmp -DDPCPP
 endif
 
 ifeq ($(ARCH), a64fx)
-CXXFLAGS += -mcpu=a64fx+sve
+  CXXFLAGS += -mcpu=a64fx+sve
 else ifeq ($(ARCH), x86)
-CXXFLAGS += -march=native
+  CXXFLAGS += -march=native
 endif
 
 

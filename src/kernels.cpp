@@ -405,6 +405,8 @@ void kernel_atomics(int size, TYPE &sum, TYPE* m)
 
 /////////////////////////////////////////////// Reduction 
 
+#if defined(ACPP) && (OMP)
+
 
 void kernel_reduction(sycl::queue &Q, TYPE* sum, TYPE* m_shared, sycl::range<1> global)
 {
@@ -413,7 +415,7 @@ void kernel_reduction(sycl::queue &Q, TYPE* sum, TYPE* m_shared, sycl::range<1> 
 #if defined(ACPP) 
         auto sum_red = sycl::reduction(sum, sycl::plus<TYPE>());
 #else
-        auto sum_red = sycl::reduction(sum, sycl::plus<TYPE>(), sycl::property::reduction::initialize_to_identity{});    
+        auto sum_red = sycl::reduction(sum, sycl::plus<TYPE>());    
 #endif
 
         cgh.parallel_for<>(sycl::range<1>(global), sum_red ,[=](sycl::item<1>it, auto &sum){
@@ -437,7 +439,7 @@ void kernel_reduction(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::buff
 
 #if defined(ACPP) 
         auto sum_acc = sum_buff.get_access<sycl::access::mode::read_write>(cgh);
-        auto sum_red = sycl::reduction(sum_acc, sycl::plus<TYPE>()); 
+        auto sum_red = sycl::reduction(sum_acc, sycl::plus<TYPE>());
 #else
         auto sum_red = sycl::reduction(sum_buff, cgh,sycl::plus<TYPE>());
         
@@ -454,6 +456,8 @@ void kernel_reduction(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::buff
 
     Q.wait();
 }
+
+#endif
 
 void kernel_reduction(int size, TYPE &sum, TYPE* m)
 {

@@ -280,6 +280,7 @@ int main(int argc, char* argv[]) {
 
       atomics_omp(n_row, true, iter);
 
+#if defined (ACPP) && (OMP)
       reduction_with_usm(Q, n_row,  block_size, false, 3);
 
       reduction_with_usm(Q, n_row,  block_size, true, iter);
@@ -287,7 +288,7 @@ int main(int argc, char* argv[]) {
       reduction_with_buf_acc(Q, n_row,  block_size, false, 3);
 
       reduction_with_buf_acc(Q, n_row,  block_size, true, iter);
-
+#endif
       reduction_omp(n_row, false, 3);
 
       reduction_omp(n_row, true, iter);

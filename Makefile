@@ -6,10 +6,6 @@ ifndef BACKEND
 BACKEND    = omp
 endif
 
-ifndef TYPE
-TYPE       = double
-endif
-
 # Compiler can be set below, or via environment variable
 ifeq ($(VENDOR), acpp)
   CXX       = acpp
@@ -54,7 +50,7 @@ obj = $(source:.cpp=.o)
 #===============================================================================
 
 # Standard Flags
-CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=TYPE
+CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=double
 
 # Debug Flags
 ifeq ($(DEBUG),yes)

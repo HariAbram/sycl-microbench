@@ -68,7 +68,7 @@ ifeq ($(OPTIMIZE),yes)
 endif
 
 ifeq ($(VENDOR), acpp)
-  CXXFLAGS += -DHIPSYCL --hipsycl-platform=cpu  -fopenmp -DACPP
+  CXXFLAGS += -DHIPSYCL --acpp-platform=cpu  -fopenmp -DACPP
   ifeq ($(BACKEND), omp)
     CXXFLAGS += -DOMP --acpp-targets=omp.accelerated
   else ifeq ($(BACKEND), ocl)

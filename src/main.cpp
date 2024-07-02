@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "Min (sec)" 
           << std::left << std::setw(24) << "Max" 
           << std::left << std::setw(24) << "Median" 
-          << std::left << std::setw(24) << "Average"
+          << std::left << std::setw(24) << "Mean"
           << std::left << std::setw(24) << "std_dev" 
           << std::endl
           << std::fixed;
@@ -265,7 +265,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
           << std::left << std::setw(24) << "Median"
-          << std::left << std::setw(24) << "Average"
+          << std::left << std::setw(24) << "Mean"
           << std::left << std::setw(24) << "std_dev"
           << std::endl
           << std::fixed;
@@ -302,7 +302,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
           << std::left << std::setw(24) << "Median"
-          << std::left << std::setw(24) << "Average"
+          << std::left << std::setw(24) << "Mean"
           << std::left << std::setw(24) << "std_dev"
           << std::endl
           << std::fixed;
@@ -342,7 +342,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
           << std::left << std::setw(24) << "Median"
-          << std::left << std::setw(24) << "Average"
+          << std::left << std::setw(24) << "Mean"
           << std::left << std::setw(24) << "std_dev"
           << std::endl
           << std::fixed;
@@ -381,7 +381,7 @@ int main(int argc, char* argv[]) {
           << std::left << std::setw(24) << "Min (sec)"
           << std::left << std::setw(24) << "Max"
           << std::left << std::setw(24) << "Median"
-          << std::left << std::setw(24) << "Average"
+          << std::left << std::setw(24) << "Mean"
           << std::left << std::setw(24) << "std_dev"
           << std::endl
           << std::fixed;

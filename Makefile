@@ -70,9 +70,9 @@ endif
 ifeq ($(VENDOR), acpp)
   CXXFLAGS += -DHIPSYCL --acpp-platform=cpu  -fopenmp -DACPP
   ifeq ($(BACKEND), omp)
-    CXXFLAGS += -DOMP --acpp-targets=omp.accelerated
+    CXXFLAGS += --acpp-targets=omp.accelerated
   else ifeq ($(BACKEND), ocl)
-    CXXFLAGS += -DOCL --acpp-targets=generic
+    CXXFLAGS += --acpp-targets=generic
   endif
 else ifeq ($(VENDOR), intel-llvm)
   CXXFLAGS += -fsycl -fopenmp 

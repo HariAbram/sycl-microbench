@@ -37,11 +37,9 @@ void atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter);
 
 void atomics_usm(sycl::queue &Q, int size, bool print, int iter);
 
-#if defined (ACPP) && (OMP)
 void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print, int iter);
 
 void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, int iter);
-#endif
 
 // barriers
 

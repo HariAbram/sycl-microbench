@@ -298,7 +298,6 @@ void atomics_buf_acc(sycl::queue &Q, int size, bool print, int iter)
     free(sum);
 }
 
-#if defined (ACPP) && (OMP)
 void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print, int iter)
 {
     timer time;
@@ -342,7 +341,6 @@ void reduction_with_buf_acc(sycl::queue &Q, int size, int block_size, bool print
     
     free(m_shared);
 }
-#endif
 
 void group_barrier_test_buff_acc(sycl::queue &Q, int size, int block_size, bool print, int iter, int dim)
 {

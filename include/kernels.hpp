@@ -72,13 +72,10 @@ void kernel_atomics(int size, TYPE &sum, TYPE* m);
 
 /// reduction
 
-#if defined (ACPP) && (OMP)
 
 void kernel_reduction(sycl::queue &Q, TYPE* sum, TYPE* m_shared, sycl::range<1> global);
 
 void kernel_reduction(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::buffer<TYPE, 1> m_buff, sycl::range<1> global);
-
-#endif
 
 void kernel_reduction(int size, TYPE &sum, TYPE* m);
 

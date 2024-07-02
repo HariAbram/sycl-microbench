@@ -1,7 +1,7 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <getopt.h>
 #include <assert.h>
 #include <sys/time.h>
@@ -13,7 +13,7 @@
 #define TYPE double
 #endif
 
-using namespace cl;
+//using namespace cl;
 
 /////////////////////////////////////////////// init arrays
 
@@ -405,9 +405,6 @@ void kernel_atomics(int size, TYPE &sum, TYPE* m)
 
 /////////////////////////////////////////////// Reduction 
 
-#if defined(ACPP) && (OMP)
-
-
 void kernel_reduction(sycl::queue &Q, TYPE* sum, TYPE* m_shared, sycl::range<1> global)
 {
     Q.submit([&](sycl::handler& cgh){
@@ -420,7 +417,7 @@ void kernel_reduction(sycl::queue &Q, TYPE* sum, TYPE* m_shared, sycl::range<1> 
 
         cgh.parallel_for<>(sycl::range<1>(global), sum_red ,[=](sycl::item<1>it, auto &sum){
 
-            const int j = it.get_id(0);
+           const int j = it.get_id(0);
 
             sum += m_shared[j];
             
@@ -456,8 +453,6 @@ void kernel_reduction(sycl::queue &Q, sycl::buffer<TYPE, 1> sum_buff, sycl::buff
 
     Q.wait();
 }
-
-#endif
 
 void kernel_reduction(int size, TYPE &sum, TYPE* m)
 {

@@ -3,7 +3,7 @@
 #===============================================================================
 
 ifndef BACKEND
-BACKEND    = omp
+BACKEND    = ocl
 endif
 
 ifndef TYPE
@@ -29,7 +29,7 @@ DEBUG     = no
 ifeq ($(VENDOR), acpp)
   ifeq ($(BACKEND), omp)
     program = bin/main-acpp-omp
-  else ifeq ($(BACKEND), ocl)
+  else 
     program = bin/main-acpp-ocl
   endif
 else ifeq ($(VENDOR), intel-llvm)
@@ -71,7 +71,7 @@ ifeq ($(VENDOR), acpp)
   CXXFLAGS += -DHIPSYCL --acpp-platform=cpu  -fopenmp -DACPP
   ifeq ($(BACKEND), omp)
     CXXFLAGS += --acpp-targets=omp.accelerated
-  else ifeq ($(BACKEND), ocl)
+  else 
     CXXFLAGS += --acpp-targets=generic
   endif
 else ifeq ($(VENDOR), intel-llvm)

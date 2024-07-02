@@ -36,6 +36,13 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
 
   double average = std::accumulate(timings, timings+iter, 0.0) / (double)(iter);
 
+  auto variance_func = [&average, &iter](TYPE accumulator, const TYPE& val) {
+        return accumulator + ((val - average)*(val - average) / (iter - 1));
+    };
+
+  auto var = std::accumulate(timings, timings+iter, 0.0, variance_func);
+
+  auto std_dev = std::sqrt(var);
 
   if (bench == 1 )
   {
@@ -48,6 +55,7 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
       << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-6
       << std::left << std::setw(24) << std::setprecision(6) << median*1E-6
       << std::left << std::setw(24) << std::setprecision(6) << average*1E-6
+      << std::left << std::setw(24) << std::setprecision(6) << std_dev*1E-6
       << std::endl;
     }
     else
@@ -59,6 +67,7 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
       << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-9
       << std::left << std::setw(24) << std::setprecision(6) << median*1E-9
       << std::left << std::setw(24) << std::setprecision(6) << average*1E-9
+      << std::left << std::setw(24) << std::setprecision(6) << std_dev*1E-9
       << std::endl;
 
     } 
@@ -73,6 +82,7 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
     << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-9
     << std::left << std::setw(24) << std::setprecision(6) << median*1E-9
     << std::left << std::setw(24) << std::setprecision(6) << average*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << std_dev*1E-9
     << std::endl
     << std::fixed;
   }
@@ -85,6 +95,7 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
     << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-9
     << std::left << std::setw(24) << std::setprecision(6) << median*1E-9
     << std::left << std::setw(24) << std::setprecision(6) << average*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << std_dev*1E-9
     << std::endl
     << std::fixed;
   }
@@ -97,6 +108,7 @@ void print_results(double *timings, int iter, int size, std::string benchmark, i
     << std::left << std::setw(24) << std::setprecision(6) << *minmax.second*1E-9
     << std::left << std::setw(24) << std::setprecision(6) << median*1E-9
     << std::left << std::setw(24) << std::setprecision(6) << average*1E-9
+    << std::left << std::setw(24) << std::setprecision(6) << std_dev*1E-9
     << std::endl
     << std::fixed;
   }  

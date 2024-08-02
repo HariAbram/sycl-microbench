@@ -84,6 +84,8 @@ ifeq ($(ARCH), a64fx)
   CXXFLAGS += -mcpu=a64fx+sve
 else ifeq ($(ARCH), x86)
   CXXFLAGS += -march=native
+else ifeq ($(ARCH), graviton3)
+  CXXFLAGS += -mcpu=neoverse-v1
 endif
 
 

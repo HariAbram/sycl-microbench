@@ -3,7 +3,7 @@
 #===============================================================================
 
 ifndef BACKEND
-BACKEND    = ocl
+BACKEND    = generic
 endif
 
 ifndef TYPE
@@ -30,7 +30,7 @@ ifeq ($(VENDOR), acpp)
   ifeq ($(BACKEND), omp)
     program = bin/main-acpp-omp
   else 
-    program = bin/main-acpp-ocl
+    program = bin/main-acpp-generic
   endif
 else ifeq ($(VENDOR), intel-llvm)
   program = bin/main-intel-llvm

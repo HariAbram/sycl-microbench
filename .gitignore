@@ -4,6 +4,8 @@
 *.class
 *.dll
 *.exe
+*.xml
+*.idea
 *.o
 *.so
 *.json

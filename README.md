@@ -13,7 +13,7 @@ This is a micro-benchmark for testing the overhead of SYCL features, the followi
 Make is used to build this benchmark. 
 
 ```
-make VENDOR=acpp|intel-llvm|<empty=DPCPP> BACKEND=omp|<empty> ARCH=x86|a64fx
+make VENDOR=acpp|intel-llvm|<empty=DPCPP> BACKEND=omp|<empty=ocl> ARCH=x86|a64fx|graviton3
 ```
 Depending on the Implementation choosen, paths to all the the binaries and libraries should be added to the standard environment variables, such as $PATH and $LD_LIBRARY_PATH
 

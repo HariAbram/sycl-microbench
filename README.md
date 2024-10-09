@@ -23,20 +23,21 @@ For optimal performance set `OMP_PROC_BIND` environment variable is set to true.
 
 ```
 ./binary [-s size |-b blocksize <optional> |-I No. iterations | --print-system\n"
-			--mat-mul : to run matrix multiplication 
-			--mat-vec : to run matrix vector multiplication 
-			--triad   : to run a triad operation 
-			--outer-product   : to run a outer product operation 
-			-i : for different routines in vectorization benchmark
+			--mat-mul: to run matrix multiplication 
+			--mat-vec: to run matrix-vector multiplication 
+			--triad: to run a triad benchmark 
+			--outer-product: to run an outer product benchmark
+			--cross-product: to run an cross product benchmark
+			-i: for different routines in vectorization benchmark
 			      1 - range with USM
 			      2 - range with Buffer and Accessors
 			      3 - nd_range with USM
 			      4 - nd_range with Buffer and Accessor
-			--mem-alloc : to alloc memory using SYCL and standard malloc 
-			--reduction : to test reduction using atomics and sycl reduction construct
-			--range : to test sycl range construct
+			--mem-alloc: to alloc memory using SYCL and standard malloc 
+			--reduction: to test reduction using atomics and sycl reduction construct
+			--range: to test sycl range construct
 			--ndrange : to test sycl nd_range construct
-			--barrier : to test sycl barrier construct
+			--barrier: to test sycl barrier construct
 			
    
 ```

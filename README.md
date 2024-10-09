@@ -10,7 +10,7 @@ This is a micro-benchmark for testing the overhead of SYCL features, the followi
 
 # Building 
 
-CMake is used to build this benchmark. 
+Make is used to build this benchmark. 
 
 ```
 make VENDOR=acpp|intel-llvm|<empty=DPCPP> BACKEND=omp|<empty> ARCH=x86|a64fx

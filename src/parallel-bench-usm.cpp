@@ -67,7 +67,9 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
     for (size_t i = 0; i < iter; i++)
     {   
         time1.start_timer();
+        LIKWID_MARKER_START("host_memory_alloc");
         kernel_copy(Q, m_host, a_host, global);
+        LIKWID_MARKER_STOP("host_memory_alloc");
         time1.end_timer();
 
         timings[i] = time1.duration();
@@ -156,7 +158,9 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     for (size_t i = 0; i < iter; i++)
     {
         time1.start_timer();
+        LIKWID_MARKER_START("shared_memory_alloc");
         kernel_copy(Q, m_shared, a_shared, global);
+        LIKWID_MARKER_STOP("shared_memory_alloc");
         time1.end_timer();
 
         timings[i] = time1.duration();
@@ -248,7 +252,9 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     {
 
         time1.start_timer();
+        LIKWID_MARKER_START("device_memory_alloc");
         kernel_copy(Q, m_device, a_device, global);
+        LIKWID_MARKER_STOP("device_memory_alloc");
         time1.end_timer();
 
         timings[i] = time1.duration();

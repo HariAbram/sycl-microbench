@@ -22,6 +22,9 @@ endif
 OPTIMIZE  = yes
 DEBUG     = no
 
+LIKWID_LIB = /opt/likwid/lib/ 
+LIKWID_INCLUDE=/opt/likwid/include/
+
 #===============================================================================
 # Program name & source code list
 #===============================================================================
@@ -54,7 +57,7 @@ obj = $(source:.cpp=.o)
 #===============================================================================
 
 # Standard Flags
-CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=$(TYPE)
+CXXFLAGS := $(EXTRA_CFLAGS) $(KERNEL_DIM) -std=c++17 -Wall -DTYPE=$(TYPE) -I$(LIKWID_INCLUDE) -L$(LIKWID_LIB) -llikwid
 
 # Debug Flags
 ifeq ($(DEBUG),yes)

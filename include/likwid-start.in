@@ -55,7 +55,7 @@
 
     // Setup the eventset identified by group ID (gid).
     err = perfmon_setupCounters(gid);
-    /*
+    
     if (err < 0)
     {
         printf("Failed to setup group %d in LIKWID's performance monitoring module\n", gid);
@@ -63,7 +63,7 @@
         topology_finalize();
         return;
     }
-    */
+    
     // Start all counters in the previously set up event set.
     err = perfmon_startCounters();
     if (err < 0)

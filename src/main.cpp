@@ -172,19 +172,6 @@ int main(int argc, char* argv[]) {
       std::cout << Q.get_device().get_info<sycl::info::device::name>()<<"\n"<<std::endl;
     }
 
-    LIKWID_MARKER_INIT;
-
-    #pragma omp parallel
-    {
-        
-        LIKWID_MARKER_THREADINIT;
-
-        
-        LIKWID_MARKER_REGISTER("host_memory_alloc");
-        LIKWID_MARKER_REGISTER("shared_memory_alloc");
-        LIKWID_MARKER_REGISTER("device_memory_alloc");
-    }
-
     if (mat_mul)
     {
       if (vec_no==1)
@@ -249,7 +236,6 @@ int main(int argc, char* argv[]) {
           << std::endl
           << std::fixed;
 
-      
       host_memory_alloc(Q, n_row,  block_size, false, 3);
 
       host_memory_alloc(Q, n_row,  block_size, true, iter);
@@ -446,7 +432,6 @@ int main(int argc, char* argv[]) {
     {
       fprintf(stderr, "No input parameters specified, use --help to see how to use this binary\n"); 
     }
-    LIKWID_MARKER_CLOSE;
 
     return 0;
 

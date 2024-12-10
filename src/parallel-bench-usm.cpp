@@ -64,16 +64,17 @@ void host_memory_alloc(sycl::queue &Q, int size, int block_size , bool print, in
 
     init_arrays(Q, m_host, a_host, global);
 
+#ifdef LIKWID_PERFMON
+#include "../include/likwid-start.in"
     for (size_t i = 0; i < iter; i++)
     {   
         time1.start_timer();
-        LIKWID_MARKER_START("host_memory_alloc");
         kernel_copy(Q, m_host, a_host, global);
-        LIKWID_MARKER_STOP("host_memory_alloc");
         time1.end_timer();
-
         timings[i] = time1.duration();
     }
+#include "../include/likwid-end.in"
+#endif
 
     if (print)
     {
@@ -154,18 +155,18 @@ void shared_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     auto a_shared = sycl::malloc_shared<TYPE>(size*size,Q); Q.wait();
     
     init_arrays(Q, m_shared, a_shared, global);
-
+#ifdef LIKWID_PERFMON
+#include "../include/likwid-start.in"
     for (size_t i = 0; i < iter; i++)
     {
         time1.start_timer();
-        LIKWID_MARKER_START("shared_memory_alloc");
         kernel_copy(Q, m_shared, a_shared, global);
-        LIKWID_MARKER_STOP("shared_memory_alloc");
         time1.end_timer();
 
         timings[i] = time1.duration();
     }
-
+#include "../include/likwid-end.in"
+#endif
     if (print)
     {
         print_results(timings, iter, size, "Shared memory (r)",1, 1);
@@ -248,19 +249,17 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     
     Q.wait();
 
+#ifdef LIKWID_PERFMON
+#include "../include/likwid-start.in"
     for (size_t i = 0; i < iter; i++)
     {
-
         time1.start_timer();
-        LIKWID_MARKER_START("device_memory_alloc");
         kernel_copy(Q, m_device, a_device, global);
-        LIKWID_MARKER_STOP("device_memory_alloc");
         time1.end_timer();
-
-        timings[i] = time1.duration();
-        
+        timings[i] = time1.duration();      
     }
-
+#include "../include/likwid-end.in"
+#endif
     if (print)
     {
         print_results(timings, iter, size, "Device memory (r)",1, 1);

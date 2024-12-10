@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <string>
 
+#include "../include/utils.hpp"
+
 #ifndef TYPE
 #define TYPE double
 #endif
@@ -61,14 +63,21 @@ void kernel_copy(sycl::queue &Q, TYPE *m, TYPE *a, sycl::range<1> global)
     Q.submit([&](sycl::handler& cgh){
 
         cgh.parallel_for<>(sycl::range<1>(global), [=](sycl::item<1> it){
-
+            LIKWID_MARKER_START("host_memory_alloc");
+            LIKWID_MARKER_START("device_memory_alloc");
+            LIKWID_MARKER_START("shared_memory_alloc");
+            
             const int k = it.get_id(0);
-
             m[k] = a[k];
+
+            LIKWID_MARKER_STOP("shared_memory_alloc");
+            LIKWID_MARKER_STOP("device_memory_alloc");
+            LIKWID_MARKER_STOP("host_memory_alloc");
 
         });
     });
     Q.wait();
+    
 
 }
 

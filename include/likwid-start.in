@@ -14,7 +14,7 @@
         return;
     }
     // CpuInfo_t contains global information like name, CPU family, ...
-    //CpuInfo_t info = get_cpuInfo();
+    CpuInfo_t info = get_cpuInfo();
     // CpuTopology_t contains information about the topology of the CPUs.
     CpuTopology_t topo = get_cpuTopology();
     // Create affinity domains. Commonly only needed when reading Uncore counters

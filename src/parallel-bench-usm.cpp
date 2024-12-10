@@ -249,7 +249,6 @@ void device_memory_alloc(sycl::queue &Q, int size, int block_size ,bool print, i
     
     Q.wait();
 
-
 #ifdef LIKWID_PERFMON
 #include "../include/likwid-start.in"
     for (size_t i = 0; i < iter; i++)

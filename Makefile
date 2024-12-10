@@ -68,7 +68,7 @@ ifeq ($(OPTIMIZE),yes)
 endif
 
 ifeq ($(VENDOR), acpp)
-  CXXFLAGS += -DHIPSYCL --acpp-platform=cpu  -fopenmp -DACPP
+  CXXFLAGS += -DHIPSYCL --acpp-platform=cpu  -fopenmp -DACPP 
   ifeq ($(BACKEND), omp)
     CXXFLAGS += --acpp-targets=omp.accelerated
   else 
@@ -98,7 +98,7 @@ LDFLAGS =
 # Targets to Build
 #===============================================================================
 
-all: clean $(program)
+all: $(program)
 
 $(program): $(obj)
 	$(CXX) $(CXXFLAGS) $(obj) -o $@ $(LDFLAGS)

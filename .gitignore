@@ -12,6 +12,8 @@
 /bin/*
 *.data
 /paralle_micro
+*.old
+*.txt
 
 # Packages #
 ############
@@ -25,6 +27,7 @@
 *.rar
 *.tar
 *.zip
+
 
 
 # Logs and databases #

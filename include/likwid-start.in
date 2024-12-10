@@ -14,7 +14,7 @@
         return;
     }
     // CpuInfo_t contains global information like name, CPU family, ...
-    CpuInfo_t info = get_cpuInfo();
+    //CpuInfo_t info = get_cpuInfo();
     // CpuTopology_t contains information about the topology of the CPUs.
     CpuTopology_t topo = get_cpuTopology();
     // Create affinity domains. Commonly only needed when reading Uncore counters
@@ -55,6 +55,7 @@
 
     // Setup the eventset identified by group ID (gid).
     err = perfmon_setupCounters(gid);
+    /*
     if (err < 0)
     {
         printf("Failed to setup group %d in LIKWID's performance monitoring module\n", gid);
@@ -62,6 +63,7 @@
         topology_finalize();
         return;
     }
+    */
     // Start all counters in the previously set up event set.
     err = perfmon_startCounters();
     if (err < 0)

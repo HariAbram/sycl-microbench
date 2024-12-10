@@ -174,6 +174,17 @@ int main(int argc, char* argv[]) {
 
     LIKWID_MARKER_INIT;
 
+    #pragma omp parallel
+    {
+        
+        LIKWID_MARKER_THREADINIT;
+
+        
+        LIKWID_MARKER_REGISTER("host_memory_alloc");
+        LIKWID_MARKER_REGISTER("shared_memory_alloc");
+        LIKWID_MARKER_REGISTER("device_memory_alloc");
+    }
+
     if (mat_mul)
     {
       if (vec_no==1)
@@ -238,17 +249,15 @@ int main(int argc, char* argv[]) {
           << std::endl
           << std::fixed;
 
-      LIKWID_MARKER_REGISTER("host_memory_alloc");
+      
       host_memory_alloc(Q, n_row,  block_size, false, 3);
 
       host_memory_alloc(Q, n_row,  block_size, true, iter);
 
-      LIKWID_MARKER_REGISTER("shared_memory_alloc");
       shared_memory_alloc(Q, n_row,  block_size,false, 3);
 
       shared_memory_alloc(Q, n_row,  block_size,true, iter);
 
-      LIKWID_MARKER_REGISTER("device_memory_alloc");
       device_memory_alloc(Q, n_row,  block_size,false, 3);
 
       device_memory_alloc(Q, n_row,  block_size,true, iter);

@@ -2,8 +2,8 @@
     int* cpus;
     int gid;
     double result = 0.0;
-    char estr[] = "MEM_LOAD_RETIRED_L1_MISS:PMC0,MEM_LOAD_RETIRED_L2_MISS:PMC1,MEM_LOAD_RETIRED_L3_MISS:PMC2";
-    const char* enames[3] = {"MEM_LOAD_RETIRED_L1_MISS:PMC0","MEM_LOAD_RETIRED_L2_MISS:PMC1","MEM_LOAD_RETIRED_L3_MISS:PMC2"};
+    char estr[] ="CYCLE_ACTIVITY_STALLS_MEM_ANY:PMC0" ;//"MEM_LOAD_RETIRED_L1_MISS:PMC0,MEM_LOAD_RETIRED_L2_MISS:PMC1,MEM_LOAD_RETIRED_L3_MISS:PMC2";
+    char* enames[1] = {"CYCLE_ACTIVITY_STALLS_MEM_ANY:PMC0"};//{"MEM_LOAD_RETIRED_L1_MISS:PMC0","MEM_LOAD_RETIRED_L2_MISS:PMC1","MEM_LOAD_RETIRED_L3_MISS:PMC2"};
     int n = sizeof(enames) / sizeof(enames[0]);
     //perfmon_setVerbosity(3);
     // Load the topology module and print some values.

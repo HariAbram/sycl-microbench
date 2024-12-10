@@ -19,6 +19,7 @@
     CpuTopology_t topo = get_cpuTopology();
     // Create affinity domains. Commonly only needed when reading Uncore counters
     affinity_init();
+    printf("Likwid example on a %s with %d CPUs\n", info->name, topo->numHWThreads);
 
     cpus = (int*)malloc(topo->numHWThreads * sizeof(int));
     if (!cpus)

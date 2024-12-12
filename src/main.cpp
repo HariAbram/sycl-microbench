@@ -166,6 +166,8 @@ int main(int argc, char* argv[]) {
     
     sycl::queue Q{};
 
+    LIKWID_MARKER_INIT;
+
     if (print_system)
     {
       std::cout << "running on ..."<< std::endl;
@@ -236,13 +238,28 @@ int main(int argc, char* argv[]) {
           << std::endl
           << std::fixed;
 
+      #pragma omp parallel
+      {
+          LIKWID_MARKER_REGISTER("host_memory_alloc");
+      }
+
       host_memory_alloc(Q, n_row,  block_size, false, 3);
 
       host_memory_alloc(Q, n_row,  block_size, true, iter);
 
+      #pragma omp parallel
+      {
+          LIKWID_MARKER_REGISTER("shared_memory_alloc");
+      }
+
       shared_memory_alloc(Q, n_row,  block_size,false, 3);
 
       shared_memory_alloc(Q, n_row,  block_size,true, iter);
+
+      #pragma omp parallel
+      {
+          LIKWID_MARKER_REGISTER("device_memory_alloc");
+      }
 
       device_memory_alloc(Q, n_row,  block_size,false, 3);
 
@@ -432,6 +449,8 @@ int main(int argc, char* argv[]) {
     {
       fprintf(stderr, "No input parameters specified, use --help to see how to use this binary\n"); 
     }
+
+    LIKWID_MARKER_CLOSE;
 
     return 0;
 

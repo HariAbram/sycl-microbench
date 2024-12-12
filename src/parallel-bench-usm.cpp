@@ -564,16 +564,23 @@ void reduction_with_usm(sycl::queue &Q, int size, int block_size, bool print, in
 
     auto timings = (double*)std::malloc(sizeof(double)*iter);
 
+    #pragma omp parallel
+    {
+        LIKWID_MARKER_START("reduction_usm");
+    }
+
     for ( i = 0; i < iter; i++)
     {
         time.start_timer();
-
         kernel_reduction(Q, sum, m_shared, global);
-
         time.end_timer();
-
         timings[i] = time.duration();
     }   
+
+    #pragma omp parallel
+    {
+        LIKWID_MARKER_STOP("reduction_usm");
+    }
 
     if (print)
     {

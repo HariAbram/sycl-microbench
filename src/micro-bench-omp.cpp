@@ -200,6 +200,11 @@ void reduction_omp(int size, bool print, int iter)
 
   auto timings = (double*)std::malloc(sizeof(double)*iter);
 
+  #pragma omp parallel
+  {
+    LIKWID_MARKER_START("reduction_omp");
+  }
+
   for ( i = 0; i < iter; i++)
   {
 
@@ -211,6 +216,11 @@ void reduction_omp(int size, bool print, int iter)
 
     if(sum < 0) std::cout<<sum<<std::endl;
   };
+
+  #pragma omp parallel
+  {
+    LIKWID_MARKER_STOP("reduction_omp");
+  }
 
   if (sum!= size*size*iter)
   {

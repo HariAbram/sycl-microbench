@@ -238,30 +238,30 @@ int main(int argc, char* argv[]) {
           << std::endl
           << std::fixed;
 
+      host_memory_alloc(Q, n_row,  block_size, false, 3);
+
       #pragma omp parallel
       {
           LIKWID_MARKER_REGISTER("host_memory_alloc");
       }
 
-      host_memory_alloc(Q, n_row,  block_size, false, 3);
-
       host_memory_alloc(Q, n_row,  block_size, true, iter);
+
+      shared_memory_alloc(Q, n_row,  block_size,false, 3);
 
       #pragma omp parallel
       {
           LIKWID_MARKER_REGISTER("shared_memory_alloc");
       }
 
-      shared_memory_alloc(Q, n_row,  block_size,false, 3);
-
       shared_memory_alloc(Q, n_row,  block_size,true, iter);
+
+      device_memory_alloc(Q, n_row,  block_size,false, 3);
 
       #pragma omp parallel
       {
           LIKWID_MARKER_REGISTER("device_memory_alloc");
       }
-
-      device_memory_alloc(Q, n_row,  block_size,false, 3);
 
       device_memory_alloc(Q, n_row,  block_size,true, iter);
 
@@ -301,13 +301,28 @@ int main(int argc, char* argv[]) {
 
       reduction_with_usm(Q, n_row,  block_size, false, 3);
 
+      #pragma omp parallel
+      {
+          LIKWID_MARKER_REGISTER("reduction_usm");
+      }
+
       reduction_with_usm(Q, n_row,  block_size, true, iter);
 
       reduction_with_buf_acc(Q, n_row,  block_size, false, 3);
 
+      #pragma omp parallel
+      {
+          LIKWID_MARKER_REGISTER("reduction_buf_acc");
+      }
+
       reduction_with_buf_acc(Q, n_row,  block_size, true, iter);
 
       reduction_omp(n_row, false, 3);
+
+      #pragma omp parallel
+      {
+          LIKWID_MARKER_REGISTER("reduction_omp");
+      }
 
       reduction_omp(n_row, true, iter);
     }

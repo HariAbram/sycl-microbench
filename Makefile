@@ -73,7 +73,7 @@ endif
 ifeq ($(VENDOR), acpp)
   CXXFLAGS += -DHIPSYCL --acpp-platform=cpu  -fopenmp -DACPP 
   ifeq ($(BACKEND), omp)
-    CXXFLAGS += --acpp-targets=omp.accelerated
+    CXXFLAGS += --acpp-targets=omp.accelerated 
   else 
     CXXFLAGS += --acpp-targets=generic
   endif
